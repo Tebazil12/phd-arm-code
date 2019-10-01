@@ -70,10 +70,11 @@ for iSet = 1:Expt.nSets
             fprintf('New Angle: %i\n', theta)
 
             % next position (above object)
-            robot.move([0 0 0 0 0 theta])
+            %robot.move([0 0 0 0 0 theta])
 
             % initialize videos
-            fileData = ['c' num2str(theta,'%02i') '_' num2str(iSet,'%02i')];
+            depth_times_ten = depth*10;
+            fileData = ['c' num2str(theta,'%02i') '_' num2str(iSet,'%02i') '_' num2str(depth_times_ten,'%02i')];
             if VIDEO_ON; for v = videos; video.initialize({[fileData '_' v{1}]},dirPath,dirTrain); end; end
 
             % loop through positions

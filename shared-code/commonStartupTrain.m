@@ -21,7 +21,7 @@ fprintf(info_file,'\r\nCurrent git HEAD: %s' ,current_head);
 fprintf(info_file,'\r\nCurrent branch:\r\n %s', branches);
 fprintf(info_file, '\r\nExperiment Description:\r\n');
 fprintf(info_file, '-----------------------\r\n');
-fprintf(info_file, '-45 to 45 deg, 5 deg spacing, -10 to 10mm, 1mm spacing, static radius for all,repeat\r\n');
+fprintf(info_file, '-45 to 45 deg, 5 deg spacing, -10 to 10mm, 1mm spacing, static radius for all.3d with depth -2:0.5:2\r\n');
 fclose(info_file);
 
 % startup machine and agent
