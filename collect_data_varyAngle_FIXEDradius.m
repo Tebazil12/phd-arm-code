@@ -24,6 +24,7 @@ else
     throw(ME) 
 end
 
+
 if ~ONLINE; dirTrain = 'trainCircleTap08021751'; end
 
 %% load/create training
