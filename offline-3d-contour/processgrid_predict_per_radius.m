@@ -64,12 +64,12 @@ ref_diffs_norm_max_ind = round(mean([an_index(:,:,1) an_index(:,:,2)]));
 sigma_n_y = 1.14;%1.94;
 sigma_n_diss = 5;%0.5;%1.94;
 
-n_training_lines = 5;
+n_training_angles = 5;
 
-i_trainings = round(linspace(1,19,n_training_lines));%[10 15 19 5 1];
+i_trainings = round(linspace(1,19,n_training_angles));%[10 15 19 5 1];
 i_train_data = 1;
 for training_depths = 4:6%4:6
-    for num_training = 1:n_training_lines
+    for num_training = 1:n_training_angles
 
         [dissims{i_train_data},...
          y_train{i_train_data},...
@@ -114,7 +114,7 @@ size_x2 = size(x_real(MIN_I_TRAIN:MAX_I_TRAIN,1));
 
 y_gplvm_input_train=[];
 disp_gplvm_input_train=[];
-for indexes = 1:n_training_lines
+for indexes = 1:n_training_angles
 y_gplvm_input_train = [y_gplvm_input_train;...
                        y_train{indexes}(MIN_I_TRAIN:MAX_I_TRAIN,:)];
 disp_gplvm_input_train = [disp_gplvm_input_train;...
@@ -129,7 +129,7 @@ end
 %                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,5)
 % ] ...
 
-for indexes = 1:n_training_lines
+for indexes = 1:n_training_angles
 
 end
 
@@ -140,7 +140,7 @@ end
 %                                                                             -2*ones(size_x2)
 % ]
 mu_gplvm_input_train=[];
-for indexes = linspace(-2,2,n_training_lines)
+for indexes = linspace(-2,2,n_training_angles)
 mu_gplvm_input_train = [mu_gplvm_input_train;...
                        indexes*ones(size_x2)
 ];
