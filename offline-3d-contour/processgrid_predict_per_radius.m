@@ -13,56 +13,27 @@ clear all
 % y will be normalized tap at max disp (raw data minus first frame, max
 % disps of those, diff with reference tap).
 
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c01_01.mat')
-all_data{1}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c02_01.mat')
-all_data{2}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c03_01.mat')
-all_data{3}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c04_01.mat')
-all_data{4}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c05_01.mat')
-all_data{5}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c06_01.mat')
-all_data{6}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c07_01.mat')
-all_data{7}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c08_01.mat')
-all_data{8}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c09_01.mat')
-all_data{9}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c10_01.mat')
-all_data{10}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c11_01.mat')
-all_data{11}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c12_01.mat')
-all_data{12}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c13_01.mat')
-all_data{13}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c14_01.mat')
-all_data{14}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c15_01.mat')
-all_data{15}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c16_01.mat')
-all_data{16}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c17_01.mat')
-all_data{17}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c18_01.mat')
-all_data{18}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c19_01.mat')
-all_data{19}= fliplr(data);
-max_num = 19;
+
 
 % load('/home/lizzie/git/masters-tactile/data/partCircleRadii2019-01-09_1421/c45_01.mat') % whole circ, fixed angle wrt workframe
-% n_radii_taps = 21;
-% max_num= 19;
-% for radii_num = 1:max_num
-%     for num = 1:n_radii_taps
-%         actual_index = (n_radii_taps*(radii_num-1))+num;
-%         all_data{radii_num}{1,num}= data{1,actual_index};
-%     end
-% end
-% all_data{1};
+load('/home/lizzie/OneDrive/data/collect_data_3d_varyAngle_FIXEDslice2019-10-01_1901/c45_01_20.mat')
+%all_data = data; % get to state all_data{depth}{angle}{disp}
+
+n_disps_per_radii = 21;
+n_angles = 19;
+n_depths = 9;
+current_number = 1;
+for depth = 1:n_depths
+    for angle = 1:n_angles
+        for disp = 1:n_disps_per_radii
+            all_data{depth}{angle}{1,disp}= data{1,current_number};
+            current_number = current_number + 1;
+        end
+    end
+end
+all_data{1};
+
+% n_angles = 19;
 
 
 TRIM_DATA = true;
@@ -80,7 +51,7 @@ x_real_test = [-10:1:10]';
 dissims =[];
 
 %% Define reference tap & stuff
-ref_tap = all_data{10}{11};%(:,:,:); 
+ref_tap = all_data{5}{10}{11};%(:,:,:); 
 
 % Normalize data, so get distance moved not just relative position
 ref_diffs_norm = ref_tap(: ,:  ,:) - ref_tap(1 ,:  ,:); %normalized, assumes starts on no contact/all start in same position
@@ -93,32 +64,38 @@ ref_diffs_norm_max_ind = round(mean([an_index(:,:,1) an_index(:,:,2)]));
 sigma_n_y = 1.14;%1.94;
 sigma_n_diss = 5;%0.5;%1.94;
 
-i_trainings = [10 15 19 5 1];
-for num_training = 1:5
-    
-    [dissims{num_training},...
-     y_train{num_training},...
-     x_diffs{num_training},...
-     y_diffs{num_training}] = process_taps(all_data{i_trainings(num_training)},...
-                                           ref_diffs_norm,...
-                                           ref_diffs_norm_max_ind,...
-                                           sigma_n_diss,... 
-                                           x_real(:,1),...
-                                           ref_tap);
-                                                        
-    x_mins{num_training}  = radius_diss_shift(dissims{num_training}, x_real(:,1), sigma_n_diss,TRAIN_MIN_DISP);
-    if num_training == 1
-        if x_mins{1} ~= 0
-            warning("Reference tap is not the min at disp 0")
-            x_mins{1}
+n_training_lines = 5;
+
+i_trainings = round(linspace(1,19,n_training_lines));%[10 15 19 5 1];
+i_train_data = 1;
+for training_depths = 4:6%4:6
+    for num_training = 1:n_training_lines
+
+        [dissims{i_train_data},...
+         y_train{i_train_data},...
+         x_diffs{i_train_data},...
+         y_diffs{i_train_data}] = process_taps(all_data{training_depths}{i_trainings(num_training)},...
+                                               ref_diffs_norm,...
+                                               ref_diffs_norm_max_ind,...
+                                               sigma_n_diss,... 
+                                               x_real(:,1),...
+                                               ref_tap);
+
+        x_mins{i_train_data}  = radius_diss_shift(dissims{i_train_data}, x_real(:,1), sigma_n_diss,TRAIN_MIN_DISP);
+        if num_training == 1
+            if x_mins{1} ~= 0
+                warning("Reference tap is not the min at disp 0")
+                x_mins{1}
+            end
+        else
+            x_real(:,i_train_data) = x_real(:,1) + x_mins{i_train_data} ; % so all minima are aligned
+            if TRIM_DATA
+                x_real(:,i_train_data) = (x_real(:,i_train_data) >TRAIN_MIN_DISP).* x_real(:,i_train_data) + (x_real(:,i_train_data)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
+            end
         end
-    else
-        x_real(:,num_training) = x_real(:,1) + x_mins{num_training} ; % so all minima are aligned
-        if TRIM_DATA
-            x_real(:,num_training) = (x_real(:,num_training) >TRAIN_MIN_DISP).* x_real(:,num_training) + (x_real(:,num_training)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
-        end
+    i_train_data = i_train_data +1;
     end
- 
+    
 end
 
 
@@ -127,32 +104,55 @@ end
 init_hyper_pars = [1 300 5];
 size_x2 = size(x_real(MIN_I_TRAIN:MAX_I_TRAIN,1));
 
-y_gplvm_input_train = [y_train{1}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
-                 y_train{2}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
-                 y_train{3}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
-                 y_train{4}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
-                 y_train{5}(MIN_I_TRAIN:MAX_I_TRAIN,:)
+
+% y_gplvm_input_train = [y_train{1}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
+%                  y_train{2}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
+%                  y_train{3}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
+%                  y_train{4}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
+%                  y_train{5}(MIN_I_TRAIN:MAX_I_TRAIN,:)
+% ];
+
+y_gplvm_input_train=[];
+disp_gplvm_input_train=[];
+for indexes = 1:n_training_lines
+y_gplvm_input_train = [y_gplvm_input_train;...
+                       y_train{indexes}(MIN_I_TRAIN:MAX_I_TRAIN,:)];
+disp_gplvm_input_train = [disp_gplvm_input_train;...
+                       x_real(MIN_I_TRAIN:MAX_I_TRAIN,indexes)];                   
+end
+
+
+% [x_real(MIN_I_TRAIN:MAX_I_TRAIN,1);...
+%                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,2);...
+%                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,3);...
+%                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,4);...
+%                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,5)
+% ] ...
+
+for indexes = 1:n_training_lines
+
+end
+
+% [zeros(size_x2);...
+%                                                                             1*ones(size_x2);...
+%                                                                             2*ones(size_x2);...
+%                                                                             -1*ones(size_x2);...
+%                                                                             -2*ones(size_x2)
+% ]
+mu_gplvm_input_train=[];
+for indexes = linspace(-2,2,n_training_lines)
+mu_gplvm_input_train = [mu_gplvm_input_train;...
+                       indexes*ones(size_x2)
 ];
-
-
+end
 %% %%%%%%%%%%%%% Training %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
 init_hyper_pars_2 = [1 300 5];
 
 [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(opt_pars(1), ...
                                                           [opt_pars(2) opt_pars(3)], ...
                                                           sigma_n_y,...
-                                                          y_gplvm_input_train ,[ [x_real(MIN_I_TRAIN:MAX_I_TRAIN,1);...
-                                                                            x_real(MIN_I_TRAIN:MAX_I_TRAIN,2);...
-                                                                            x_real(MIN_I_TRAIN:MAX_I_TRAIN,3);...
-                                                                            x_real(MIN_I_TRAIN:MAX_I_TRAIN,4);...
-                                                                            x_real(MIN_I_TRAIN:MAX_I_TRAIN,5)
-] ...
-                                                                           [zeros(size_x2);...
-                                                                            1*ones(size_x2);...
-                                                                            2*ones(size_x2);...
-                                                                            -1*ones(size_x2);...
-                                                                            -2*ones(size_x2)
-] ]),...
+                                                          y_gplvm_input_train ,[disp_gplvm_input_train ...
+                                                                                mu_gplvm_input_train]),...
                             init_hyper_pars_2,...
                             optimoptions('fminunc','Display','off','MaxFunEvals',10000));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -173,18 +173,7 @@ l_disp = par(2)
 l_mu = par(3)
 % par(4)
 % par(5)
-x_gplvm_input_train = [ [x_real(MIN_I_TRAIN:MAX_I_TRAIN,1);...
-                   x_real(MIN_I_TRAIN:MAX_I_TRAIN,2);...
-                   x_real(MIN_I_TRAIN:MAX_I_TRAIN,3);...
-                   x_real(MIN_I_TRAIN:MAX_I_TRAIN,4);...
-                   x_real(MIN_I_TRAIN:MAX_I_TRAIN,5)
-] ...
-                  [zeros(size_x2);...
-                   1*ones(size_x2);...
-                   2*ones(size_x2);...
-                   -1*ones(size_x2);...
-                   -2*ones(size_x2)
-] ];
+x_gplvm_input_train = [disp_gplvm_input_train mu_gplvm_input_train];
 
 
 %% Visualize learnt model
@@ -196,12 +185,12 @@ n_bad_flags = 0;
 n_flags = 0;
 
 % for each radius
-for set_num = 1:max_num
+for set_num = 1:n_angles
     
     [dissims_test,...
      y_test,...
      x_diffs_test,...
-     y_diffs_test] = process_taps(all_data{set_num},...
+     y_diffs_test] = process_taps(all_data{5}{set_num},...
                                   ref_diffs_norm,...
                                   ref_diffs_norm_max_ind,...
                                   sigma_n_diss,...
@@ -321,7 +310,8 @@ expected_mu = -2:4/18:2;
 bar(expected_mu,new_mu(:,1,1)'-expected_mu)
 mean(abs(new_mu(:,1,1)'-expected_mu))
 plot(x_gplvm_input_train(:,2),x_gplvm_input_train(:,2)-x_gplvm_input_train(:,2),'ok','MarkerFaceColor','r')
-axis([-2.2 2.2 -0.171 0.33 ])
+%axis([-2.2 2.2 -0.171 0.33 ])
+axis([-2.2 2.2 -3 3 ])
 
 ylabel("Error in predicted \mu")
 xlabel("Expected \mu")
@@ -506,9 +496,9 @@ function test_plot(x_matrix, y, sigma_f, l_disp, l_mu, sigma_n,ref_tap, ref_diff
 hold on
 pc=plot(ref_tap(1 ,:  ,1),ref_tap(1 ,:  ,2),'+','Color','k');
 % pa=plot(y_star(:,1:126)+ref_tap(1 ,:  ,1),y_star(:,127:end)+ref_tap(1 ,:  ,2),'+','Color','r'); % predicted
-pa=plot(y_star(:,1:126)+ref_tap(1 ,:  ,1),y_star(:,127:end)+ref_tap(1 ,:  ,2),'Color','r'); % predicted
+pa=plot(y_star(:,1:125)+ref_tap(1 ,:  ,1),y_star(:,126:end)+ref_tap(1 ,:  ,2),'Color','r'); % predicted
 % pb=plot(y(:,1:126)+ref_tap(1 ,:  ,1),y(:,127:end)+ref_tap(1 ,:  ,2),'+','Color','b'); % actual
-pb=plot(y(:,1:126)+ref_tap(1 ,:  ,1),y(:,127:end)+ref_tap(1 ,:  ,2),'Color','b'); % actual
+pb=plot(y(:,1:125)+ref_tap(1 ,:  ,1),y(:,126:end)+ref_tap(1 ,:  ,2),'Color','b'); % actual
 axis equal
 title("Real vs. predicted taxel locations")
 xlabel("x displacement / pixels")
@@ -549,7 +539,7 @@ hold off
 
             % Actual tap 
     %         plot(y(num_plot,1:126)+ref_tap(1 ,:  ,1),y(num_plot,127:end)+ref_tap(1 ,:  ,2),'o','Color','b')
-            plot(y(num_plot,1:126),y(num_plot,127:end),'o','Color','b')
+            plot(y(num_plot,1:125),y(num_plot,126:end),'o','Color','b')
     %         axis([0 550 0 550])
             axis([-30 30 -60 60])
             if mod(num_plot,21)-11 == -10

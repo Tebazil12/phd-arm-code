@@ -13,43 +13,43 @@ clear all
 % y will be normalized tap at max disp (raw data minus first frame, max
 % disps of those, diff with reference tap).
 
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c01_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c01_01.mat')
 all_data{1}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c02_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c02_01.mat')
 all_data{2}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c03_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c03_01.mat')
 all_data{3}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c04_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c04_01.mat')
 all_data{4}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c05_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c05_01.mat')
 all_data{5}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c06_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c06_01.mat')
 all_data{6}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c07_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c07_01.mat')
 all_data{7}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c08_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c08_01.mat')
 all_data{8}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c09_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c09_01.mat')
 all_data{9}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c10_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c10_01.mat')
 all_data{10}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c11_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c11_01.mat')
 all_data{11}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c12_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c12_01.mat')
 all_data{12}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c13_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c13_01.mat')
 all_data{13}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c14_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c14_01.mat')
 all_data{14}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c15_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c15_01.mat')
 all_data{15}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c16_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c16_01.mat')
 all_data{16}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c17_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c17_01.mat')
 all_data{17}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c18_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c18_01.mat')
 all_data{18}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c19_01.mat')
+load('/home/lizzie/git/masters-tactile/data/singleRadius2019-01-16_1651/c19_01.mat')
 all_data{19}= fliplr(data);
 max_num = 19;
 
@@ -76,8 +76,7 @@ MIN_I_TRAIN = 1;
 MAX_I_TRAIN = 21;
 
 x_real(:,1) = [-10:1:10]';
-x_real_test = [-10:1:10]';
-dissims =[];
+% x_real_test(:,1) = [-10:1:10]';
 
 %% Define reference tap & stuff
 ref_tap = all_data{10}{11};%(:,:,:); 
@@ -146,13 +145,13 @@ init_hyper_pars_2 = [1 300 5];
                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,3);...
                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,4);...
                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,5)
-] ...
+                                                                            ] ...
                                                                            [zeros(size_x2);...
                                                                             1*ones(size_x2);...
                                                                             2*ones(size_x2);...
                                                                             -1*ones(size_x2);...
                                                                             -2*ones(size_x2)
-] ]),...
+                                                                            ] ]),...
                             init_hyper_pars_2,...
                             optimoptions('fminunc','Display','off','MaxFunEvals',10000));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -217,40 +216,41 @@ for set_num = 1:max_num
                             + (x_real(:,set_num)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
     end
         
+    for test_tap_num = MIN_I_TEST:MAX_I_TEST
+        init_latent_vars = [0 0];
+    %%%%%%%%%%%%%% Testing %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % fmincon(fun,x0,A,b,Aeq,beq,lb,ub)
+
+        [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f,...
+                                                                  [l_disp l_mu],...
+                                                                  sigma_n_y,...
+                                                                  [y_gplvm_input_train; y_test(test_tap_num,:)],...
+                                                                  [x_gplvm_input_train; opt_pars(1) opt_pars(2)]),...
+                                    init_latent_vars,...
+                                    optimoptions('fminunc','Display','off'));
+
+    % 
+    %     [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f,...
+    %                                                               [l_disp l_mu],...
+    %                                                               sigma_n_y,...
+    %                                                               [y_gplvm_input; y_gplvm_input(1:21,:)],...
+    %                                                               [x_gplvm_input; x_gplvm_input(22:42,1) ones(21,1)*opt_pars(1) ]),...
+    %                                 init_latent_vars,...
+    %                                 optimoptions('fminunc','Display','off'));
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        if flag < 1
+            n_bad_flags = n_bad_flags +1;
+            flag
+        end 
     
-    init_latent_vars = [0];
-%%%%%%%%%%%%%% Testing %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% fmincon(fun,x0,A,b,Aeq,beq,lb,ub)
+        x_real_test(set_num, test_tap_num,:) = par(1);
+        new_mu(set_num, test_tap_num,:) = par(2);
+        dissims_tests(set_num,test_tap_num) = dissims_test(test_tap_num);
 
-    [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f,...
-                                                              [l_disp l_mu],...
-                                                              sigma_n_y,...
-                                                              [y_gplvm_input_train; y_test(MIN_I_TEST:MAX_I_TEST,:)],...
-                                                              [x_gplvm_input_train; x_real(MIN_I_TEST:MAX_I_TEST,set_num) ones(size(MIN_I_TEST:MAX_I_TEST))'*opt_pars(1)]),...
-                                init_latent_vars,...
-                                optimoptions('fminunc','Display','off'));
+        n_flags = n_flags +1;
 
-% 
-%     [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f,...
-%                                                               [l_disp l_mu],...
-%                                                               sigma_n_y,...
-%                                                               [y_gplvm_input; y_gplvm_input(1:21,:)],...
-%                                                               [x_gplvm_input; x_gplvm_input(22:42,1) ones(21,1)*opt_pars(1) ]),...
-%                                 init_latent_vars,...
-%                                 optimoptions('fminunc','Display','off'));
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if flag < 1
-        n_bad_flags = n_bad_flags +1;
-        flag
-    end 
-
-    new_mu(set_num, MIN_I_TEST:MAX_I_TEST,:) = par;
-    dissims_tests(set_num, MIN_I_TEST:MAX_I_TEST) = dissims_test(MIN_I_TEST:MAX_I_TEST);
-
-    n_flags = n_flags +1;
-
-    fprintf('.');
-    
+        fprintf('.');
+    end
     fprintf('\n')
 end
 
@@ -267,21 +267,16 @@ figure(3)
 clf
 subplot(1,2,1)
 hold on
-title("Train & Test Offline 3D - 5 Input Lines")
+title("Train & Test offline 3D")
 
-% plot3(x_real(MIN_I_TEST:MAX_I_TEST,1:end),...
-%       new_mu(:,MIN_I_TEST:MAX_I_TEST,1)',...
-%       dissims_tests(:,MIN_I_TEST:MAX_I_TEST)')
-  
-surf(x_real(MIN_I_TEST:MAX_I_TEST,1:end),...
+x_real_test = x_real_test'
+plot3(x_real_test(MIN_I_TEST:MAX_I_TEST,1:end),...
       new_mu(:,MIN_I_TEST:MAX_I_TEST,1)',...
       dissims_tests(:,MIN_I_TEST:MAX_I_TEST)')
   
-view([-1,0.5,0.2])
-% for i = 1:5
-%   
-%     plot3(x_gplvm_input_train(i,1), x_gplvm_input_train(i,2), dissims(i))
-% end
+surf(x_real_test(MIN_I_TEST:MAX_I_TEST,1:end),...
+      new_mu(:,MIN_I_TEST:MAX_I_TEST,1)',...
+      dissims_tests(:,MIN_I_TEST:MAX_I_TEST)')
 
 % surf([x_gplvm_input_train(4*size(x_real,1)+1:5*size(x_real,1),1)...
 %       x_gplvm_input_train(3*size(x_real,1)+1:4*size(x_real,1),1)...
@@ -299,35 +294,204 @@ view([-1,0.5,0.2])
 %       dissims{2}(MIN_I_TRAIN:MAX_I_TRAIN)'...
 %       dissims{3}(MIN_I_TRAIN:MAX_I_TRAIN)'])
 
-xlabel("Displacemt (mm)")
+xlabel("Real Displacemt / mm")
 zlabel("Dissim")
-ylabel("\mu")
-hold off
+ylabel("mu")
+view([-1,0.5,0.2])
+
 grid on
 grid minor
 
 
 subplot(1,2,2)
 hold on
-title("Train & Test Offline \mu Error - 5 Input Lines")
+title("Train & Test offline 2D")
 
-% plot(x_real(MIN_I_TEST:MAX_I_TEST,1:end),new_mu(:,MIN_I_TEST:MAX_I_TEST,1)','+')
-% plot(x_real(MIN_I_TEST:MAX_I_TEST,1:end),new_mu(:,MIN_I_TEST:MAX_I_TEST,1)')
-% plot(x_gplvm_input_train(:,1),x_gplvm_input_train(:,2),'o')
-% xlabel("Real Displacemt / mm")
-% ylabel("mu / mm")
+plot(x_real_test(MIN_I_TEST:MAX_I_TEST,1:end),new_mu(:,MIN_I_TEST:MAX_I_TEST,1)','+')
+plot(x_real_test(MIN_I_TEST:MAX_I_TEST,1:end),new_mu(:,MIN_I_TEST:MAX_I_TEST,1)')
+plot(x_gplvm_input_train(:,1),x_gplvm_input_train(:,2),'o')
 
-expected_mu = -2:4/18:2;
-bar(expected_mu,new_mu(:,1,1)'-expected_mu)
-mean(abs(new_mu(:,1,1)'-expected_mu))
-plot(x_gplvm_input_train(:,2),x_gplvm_input_train(:,2)-x_gplvm_input_train(:,2),'ok','MarkerFaceColor','r')
-axis([-2.2 2.2 -0.171 0.33 ])
-
-ylabel("Error in predicted \mu")
-xlabel("Expected \mu")
+xlabel("Real Displacemt / mm")
+ylabel("mu / mm")
 grid on
 grid minor
 hold off
+
+figure(5)
+clf
+hold on
+%%%
+figure(1)
+clf
+
+% Cut out anomolies
+x_real_test(abs(x_real_test)>12) = NaN;
+new_mu(abs(new_mu)>2.5) = NaN;
+
+
+%     subplot(5,4,angle_num+1)
+%     title(["Radius angle: " ((angle_num-1)*20-160)])
+%     hold on
+%     %scatter(num, dissims)
+%     plot(num, dissims)
+%     xlabel("Displacemt / mm")
+%     ylabel("dissim")
+%     axis([-20 10 0 75])
+% %     axis([-20 10 0 15])
+% %     axis([-20 10 0 pi/2])
+% 
+%     hold off
+%     
+%     subplot(5,4,1)
+subplot(2,2,4)
+%     title("Whole")
+    hold on
+    %scatter(num, dissims)
+%     colour = [1-(angle_num/18) 0 angle_num/18];
+    %     plot3(nums', dissimss',1:1:18)%, 'Color',colour)
+%     surf(nums',ones(31,18).*[-160:20:180], dissimss')%, 'Color',colour)
+
+    surf(x_real_test(MIN_I_TEST:MAX_I_TEST,1:end),...
+      new_mu(:,MIN_I_TEST:MAX_I_TEST,1)',...
+      dissims_tests(:,MIN_I_TEST:MAX_I_TEST)')
+    
+    xlabel("Displacemt (mm)")
+    ylabel("\mu")
+    zlabel("Dissimilarity")
+%     axis([-15 40 -5 12])
+    axis([-12 12 -2.2 2.2])
+    view([-1,-1,0.2])
+    grid on
+    grid minor
+
+subplot(2,2,2)
+%     title("Above")
+    hold on
+
+    surf(x_real_test(MIN_I_TEST:MAX_I_TEST,1:end),...
+      new_mu(:,MIN_I_TEST:MAX_I_TEST,1)',...
+      dissims_tests(:,MIN_I_TEST:MAX_I_TEST)')
+
+    xlabel("Displacemt (mm)")
+    ylabel("\mu")
+    zlabel("Dissimilarity")
+    axis([-12 12 -2.2 2.2])
+
+    view([270 90]);
+    % view([1,-1,-1])
+    grid on
+    grid minor
+    
+subplot(2,2,1)
+    plot(x_real_test(MIN_I_TEST:MAX_I_TEST,1:end), dissims_tests(:,MIN_I_TEST:MAX_I_TEST)')
+    xlabel("Displacemt (mm)")
+    ylabel("Dissimilarity")
+    % end
+    grid on
+    grid minor
+    
+subplot(2,2,3)
+%     title("Whole")
+    hold on
+
+    surf(x_real_test(MIN_I_TEST:MAX_I_TEST,1:end),...
+      new_mu(:,MIN_I_TEST:MAX_I_TEST,1)',...
+      dissims_tests(:,MIN_I_TEST:MAX_I_TEST)')
+
+    xlabel("Displacemt (mm)")
+    ylabel("\mu")
+    zlabel("Dissimilarity")
+    axis([-12 12 -2.2 2.2])
+    view([-1,0,0])
+    grid on
+    grid minor    
+%%%
+
+% plot([-10 10],[-8 12])
+% plot([-10 10],[-12 8])
+% 
+% plot([-10 10],[-11 9])
+% plot([-10 10],[-9 11])
+
+conversion = sqrt(0.5)
+ext = 15;
+fill([-10-ext 10+ext 10+ext -10-ext ], [-10+(2*conversion)-ext 10+(2*conversion)+ext 10-(2*conversion)+ext -10-(2*conversion)-ext], [1 1 0.8],'LineStyle','none','facealpha',.5)
+fill([-10-ext 10+ext 10+ext -10-ext ], [-10+(conversion)-ext 10+(conversion)+ext 10-(conversion)+ext -10-(conversion)-ext], [0.8 1 0.8],'LineStyle','none','facealpha',.5)
+% fill([-10-ext 10+ext 10+ext -10-ext ], [-8-ext 12+ext 8+ext -12-ext], [1 1 0.8],'LineStyle','none','facealpha',.5)
+% fill([-10-ext 10+ext 10+ext -10-ext ], [-9-ext 11+ext 9+ext -11-ext], [0.8 1 0.8],'LineStyle','none','facealpha',.5)
+ 
+plot([-10-ext 10+ext],[-10-ext 10+ext],'k')
+
+plot(x_real,x_real_test,'+')
+% plot(x_real,x_real_test)
+grid on
+grid minor
+axis equal
+xlabel("Real displacement / mm")
+ylabel("Predicted displacement / mm")
+hold off
+
+
+figure(6)
+clf
+hold on
+
+% fill([-15 15 15 -15], [2 2 -2 -2], [1 1 0.8],'LineStyle','none','facealpha',.5)
+% fill([-15 15 15 -15], [1 1 -1 -1], [0.8 1 0.8],'LineStyle','none','facealpha',.5)
+% plot(x_real,x_real_test - x_real,'.')
+
+error_x =  x_real - x_real_test;
+% remove_x_anomolies = 
+
+plot(x_real, error_x,'.','Color','b','MarkerSize',10)
+
+% stem(x_real,error_x,'ob','filled','MarkerSize',3.5)
+% stem(x_real(:,1),error_x,'o','filled','MarkerSize',3.5)
+% plot(x_real,error_x)
+title("Error in Displacement Predictions - 5 Input Lines")
+ylabel("Error in predicted displacement  (mm)")
+xlabel("Real displacement (mm)")
+grid on
+grid minor
+% axis equal
+plot([-12 12],[0 0],'k')
+axis([-10.5 11.5 -7 14])
+% axis([-10.5 11.5 -4 4])
+
+hold off
+
+i_tol = 1;
+tol = 0.6;
+for tol = 0:0.1:2
+    percent_within_tol(i_tol) = sum(sum(abs(x_real_test - x_real) < tol))/prod(size(abs(x_real_test - x_real)  < tol));
+    i_tol = i_tol +1;
+end
+
+percent_within_tol
+% x_real_2 = ones(size(x_real)) .* [-10:10]';
+% x_erros = x_real_test - x_real_2;
+
+
+x_erros = x_real_test - x_real;
+mean_error = nanmean(abs(x_erros(:)))
+var_error = nanvar(x_erros(:))
+std_error = nanstd(x_erros(:))
+
+real_mus = [-2:4/18:2]';
+
+matrix_of_real_mus = ones(size(new_mu)) .* real_mus;
+
+
+
+error_in_mu = matrix_of_real_mus - new_mu;
+
+mean_abs_error_mu = nanmean(abs(error_in_mu(:)))
+
+variance_mu_error = nanvar(error_in_mu(:))
+std_mu_error = nanstd(error_in_mu(:))
+
+n_mu_anoms = sum(sum(isnan(new_mu)))
+n_disp_anoms = sum(sum(isnan(x_real_test)))
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %--------------------------- FUNCTIONS ---------------------------------------%
