@@ -41,10 +41,8 @@ TRAIN_MIN_DISP = -10;
 
 
 % Note, for all, max = 21, min = 1
-MIN_I_TEST = 1;
-MAX_I_TEST = 21;
-MIN_I_TRAIN = 1;
-MAX_I_TRAIN = 21;
+TEST_RANGE = 1:21;
+TRAIN_RANGE = 1:21;
 
 x_real(:,1) = [-10:1:10]';
 x_real_test = [-10:1:10]';
@@ -102,31 +100,31 @@ end
 %% Optimize hyper-params for training
 
 init_hyper_pars = [1 300 5];
-size_x2 = size(x_real(MIN_I_TRAIN:MAX_I_TRAIN,1));
+size_x2 = size(x_real(TRAIN_RANGE,1));
 
 
-% y_gplvm_input_train = [y_train{1}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
-%                  y_train{2}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
-%                  y_train{3}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
-%                  y_train{4}(MIN_I_TRAIN:MAX_I_TRAIN,:);...
-%                  y_train{5}(MIN_I_TRAIN:MAX_I_TRAIN,:)
+% y_gplvm_input_train = [y_train{1}(TRAIN_RANGE,:);...
+%                  y_train{2}(TRAIN_RANGE,:);...
+%                  y_train{3}(TRAIN_RANGE,:);...
+%                  y_train{4}(TRAIN_RANGE,:);...
+%                  y_train{5}(TRAIN_RANGE,:)
 % ];
 
 y_gplvm_input_train=[];
 disp_gplvm_input_train=[];
 for indexes = 1:n_training_angles
 y_gplvm_input_train = [y_gplvm_input_train;...
-                       y_train{indexes}(MIN_I_TRAIN:MAX_I_TRAIN,:)];
+                       y_train{indexes}(TRAIN_RANGE,:)];
 disp_gplvm_input_train = [disp_gplvm_input_train;...
-                       x_real(MIN_I_TRAIN:MAX_I_TRAIN,indexes)];                   
+                       x_real(TRAIN_RANGE,indexes)];                   
 end
 
 
-% [x_real(MIN_I_TRAIN:MAX_I_TRAIN,1);...
-%                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,2);...
-%                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,3);...
-%                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,4);...
-%                                                                             x_real(MIN_I_TRAIN:MAX_I_TRAIN,5)
+% [x_real(TRAIN_RANGE,1);...
+%                                                                             x_real(TRAIN_RANGE,2);...
+%                                                                             x_real(TRAIN_RANGE,3);...
+%                                                                             x_real(TRAIN_RANGE,4);...
+%                                                                             x_real(TRAIN_RANGE,5)
 % ] ...
 
 for indexes = 1:n_training_angles
@@ -214,8 +212,8 @@ for set_num = 1:n_angles
     [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f,...
                                                               [l_disp l_mu],...
                                                               sigma_n_y,...
-                                                              [y_gplvm_input_train; y_test(MIN_I_TEST:MAX_I_TEST,:)],...
-                                                              [x_gplvm_input_train; x_real(MIN_I_TEST:MAX_I_TEST,set_num) ones(size(MIN_I_TEST:MAX_I_TEST))'*opt_pars(1)]),...
+                                                              [y_gplvm_input_train; y_test(TEST_RANGE,:)],...
+                                                              [x_gplvm_input_train; x_real(TEST_RANGE,set_num) ones(size(TEST_RANGE))'*opt_pars(1)]),...
                                 init_latent_vars,...
                                 optimoptions('fminunc','Display','off'));
 
@@ -233,8 +231,8 @@ for set_num = 1:n_angles
         flag
     end 
 
-    new_mu(set_num, MIN_I_TEST:MAX_I_TEST,:) = par;
-    dissims_tests(set_num, MIN_I_TEST:MAX_I_TEST) = dissims_test(MIN_I_TEST:MAX_I_TEST);
+    new_mu(set_num, TEST_RANGE,:) = par;
+    dissims_tests(set_num, TEST_RANGE) = dissims_test(TEST_RANGE);
 
     n_flags = n_flags +1;
 
@@ -254,17 +252,40 @@ n_flags
 
 figure(3)
 clf
+subplot(1,2,2)
+hold on
+title("Train & Test Offline \mu Error - 5 Input Lines")
+
+% plot(x_real(TEST_RANGE,1:end),new_mu(:,TEST_RANGE,1)','+')
+% plot(x_real(TEST_RANGE,1:end),new_mu(:,TEST_RANGE,1)')
+% plot(x_gplvm_input_train(:,1),x_gplvm_input_train(:,2),'o')
+% xlabel("Real Displacemt / mm")
+% ylabel("mu / mm")
+
+expected_mu = -2:4/18:2;
+bar(expected_mu,new_mu(:,1,1)'-expected_mu)
+mean(abs(new_mu(:,1,1)'-expected_mu))
+plot(x_gplvm_input_train(:,2),x_gplvm_input_train(:,2)-x_gplvm_input_train(:,2),'ok','MarkerFaceColor','r')
+%axis([-2.2 2.2 -0.171 0.33 ])
+axis([-2.2 2.2 -3 3 ])
+
+ylabel("Error in predicted \mu")
+xlabel("Expected \mu")
+grid on
+grid minor
+hold off
+
 subplot(1,2,1)
 hold on
 title("Train & Test Offline 3D - 5 Input Lines")
 
-% plot3(x_real(MIN_I_TEST:MAX_I_TEST,1:end),...
-%       new_mu(:,MIN_I_TEST:MAX_I_TEST,1)',...
-%       dissims_tests(:,MIN_I_TEST:MAX_I_TEST)')
+% plot3(x_real(TEST_RANGE,1:end),...
+%       new_mu(:,TEST_RANGE,1)',...
+%       dissims_tests(:,TEST_RANGE)')
   
-surf(x_real(MIN_I_TEST:MAX_I_TEST,1:end),...
-      new_mu(:,MIN_I_TEST:MAX_I_TEST,1)',...
-      dissims_tests(:,MIN_I_TEST:MAX_I_TEST)')
+surf(x_real(TEST_RANGE,1:end),...
+      new_mu(:,TEST_RANGE,1)',...
+      dissims_tests(:,TEST_RANGE)')
   
 view([-1,0.5,0.2])
 % for i = 1:5
@@ -282,11 +303,11 @@ view([-1,0.5,0.2])
 %       x_gplvm_input_train(1:size(x_real,1),2)...
 %       x_gplvm_input_train(size(x_real,1)+1:2*size(x_real,1),2)...
 %       x_gplvm_input_train(2*size(x_real,1)+1:3*size(x_real,1),2)],...
-%      [dissims{5}(MIN_I_TRAIN:MAX_I_TRAIN)'...
-%       dissims{4}(MIN_I_TRAIN:MAX_I_TRAIN)'...
-%       dissims{1}(MIN_I_TRAIN:MAX_I_TRAIN)'...
-%       dissims{2}(MIN_I_TRAIN:MAX_I_TRAIN)'...
-%       dissims{3}(MIN_I_TRAIN:MAX_I_TRAIN)'])
+%      [dissims{5}(TRAIN_RANGE)'...
+%       dissims{4}(TRAIN_RANGE)'...
+%       dissims{1}(TRAIN_RANGE)'...
+%       dissims{2}(TRAIN_RANGE)'...
+%       dissims{3}(TRAIN_RANGE)'])
 
 xlabel("Displacemt (mm)")
 zlabel("Dissim")
@@ -296,28 +317,7 @@ grid on
 grid minor
 
 
-subplot(1,2,2)
-hold on
-title("Train & Test Offline \mu Error - 5 Input Lines")
 
-% plot(x_real(MIN_I_TEST:MAX_I_TEST,1:end),new_mu(:,MIN_I_TEST:MAX_I_TEST,1)','+')
-% plot(x_real(MIN_I_TEST:MAX_I_TEST,1:end),new_mu(:,MIN_I_TEST:MAX_I_TEST,1)')
-% plot(x_gplvm_input_train(:,1),x_gplvm_input_train(:,2),'o')
-% xlabel("Real Displacemt / mm")
-% ylabel("mu / mm")
-
-expected_mu = -2:4/18:2;
-bar(expected_mu,new_mu(:,1,1)'-expected_mu)
-mean(abs(new_mu(:,1,1)'-expected_mu))
-plot(x_gplvm_input_train(:,2),x_gplvm_input_train(:,2)-x_gplvm_input_train(:,2),'ok','MarkerFaceColor','r')
-%axis([-2.2 2.2 -0.171 0.33 ])
-axis([-2.2 2.2 -3 3 ])
-
-ylabel("Error in predicted \mu")
-xlabel("Expected \mu")
-grid on
-grid minor
-hold off
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %--------------------------- FUNCTIONS ---------------------------------------%
