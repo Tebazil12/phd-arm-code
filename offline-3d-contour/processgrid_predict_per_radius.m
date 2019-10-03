@@ -62,7 +62,7 @@ sigma_n_y = 1.14;%1.94;
 sigma_n_diss = 5;%0.5;%1.94;
 
 n_training_angles = 5;
-training_depths = 4:6;
+training_depths = 3:7;
 
 i_trainings = round(linspace(1,19,n_training_angles));%[10 15 19 5 1];
 i_train_data = 0;
@@ -81,8 +81,8 @@ for training_depth = training_depths
                                                sigma_n_diss,... 
                                                x_real(:,1),...
                                                ref_tap);
-
-        x_mins{i_train_data}  = radius_diss_shift(dissims{i_depths}{angle_num}, x_real(:,1), sigma_n_diss,TRAIN_MIN_DISP);
+        
+        x_mins{i_train_data}  = radius_diss_shift(dissims{i_depths}{angle_num}, x_real(:,1), sigma_n_diss,TRAIN_MIN_DISP,training_depth,angle_num==1);
         if angle_num == 1
             if x_mins{1} ~= 0
                 warning("Reference tap is not the min at disp 0")
@@ -155,6 +155,7 @@ for depths = 1:i_depths
     end
 end
 %% %%%%%%%%%%%%% Training %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
+fprintf('Training GPLVM\n')
 init_hyper_pars_2 = [1 300 5];
 
 [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(opt_pars(1), ...
@@ -164,6 +165,7 @@ init_hyper_pars_2 = [1 300 5];
                                                                                 mu_gplvm_input_train]),...
                             init_hyper_pars_2,...
                             optimoptions('fminunc','Display','off','MaxFunEvals',10000));
+fprintf('Finished training GPLVM\n')                        
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 flag
 if flag < 1
@@ -193,20 +195,22 @@ fprintf('Calculating predictions\n')
 n_bad_flags = 0;
 n_flags = 0;
 
+test_depth = 5;
+
 % for each radius
 for set_num = 1:n_angles
     
     [dissims_test,...
      y_test,...
      x_diffs_test,...
-     y_diffs_test] = process_taps(all_data{5}{set_num},...
+     y_diffs_test] = process_taps(all_data{test_depth}{set_num},...
                                   ref_diffs_norm,...
                                   ref_diffs_norm_max_ind,...
                                   sigma_n_diss,...
                                   x_real(:,1),...
                                   ref_tap);
     if set_num ~= 1
-        x_min  = radius_diss_shift(dissims_test, x_real(:,1), sigma_n_diss,TRAIN_MIN_DISP);
+        x_min  = radius_diss_shift(dissims_test, x_real(:,1), sigma_n_diss,TRAIN_MIN_DISP,test_depth,true);
 
         x_real(:,set_num) = x_real(:,1) + x_min;
     end
@@ -218,6 +222,7 @@ for set_num = 1:n_angles
     
     init_latent_vars = [0];
 %%%%%%%%%%%%%% Testing %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% fprintf('Testing GPLVM\n')
 % fmincon(fun,x0,A,b,Aeq,beq,lb,ub)
 
     [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f,...
@@ -236,6 +241,8 @@ for set_num = 1:n_angles
 %                                                               [x_gplvm_input; x_gplvm_input(22:42,1) ones(21,1)*opt_pars(1) ]),...
 %                                 init_latent_vars,...
 %                                 optimoptions('fminunc','Display','off'));
+
+% fprintf('Finished testing GPLVM\n')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if flag < 1
         n_bad_flags = n_bad_flags +1;
@@ -393,7 +400,7 @@ function [dissims, y_for_real, x_diffs, y_diffs] = process_taps(radii_data, ref_
     [x_diffs' y_diffs'];
 end
 
-function x_min  = radius_diss_shift(dissims, x_matrix, sigma_n, TRAIN_MIN_DISP)
+function x_min  = radius_diss_shift(dissims, x_matrix, sigma_n, TRAIN_MIN_DISP, depth,legend_on)
 % Return number that when added to the suggested x values, shifts the
 % values so that the trough (minima) lines up with 0. Uses a gp to estimate
 % smooth curve rather than using raw dissim values (gp may need tuning
@@ -446,10 +453,19 @@ function x_min  = radius_diss_shift(dissims, x_matrix, sigma_n, TRAIN_MIN_DISP)
 %     fill([x_stars, fliplr(x_stars)],...
 %          [y_star+sqrt(var_y_star), fliplr(y_star-sqrt(var_y_star))],...
 %          [1 1 0.8])
-    
-    plot(x_matrix(:,1), dissims, '+')
-    plot(x_matrix(:,1), dissims)
-    plot(x_stars, y_star)
+    colour = [(mod(depth,2)) 1-(mod(depth,9)/9) mod(depth,9)/9];
+    plot(x_matrix(:,1), dissims, '+','Color',colour,'HandleVisibility','off')
+    plot(x_matrix(:,1), dissims,'Color',colour,'HandleVisibility','off')
+    actual_depth = 5-depth;
+    if legend_on
+        plot(x_stars, y_star,'Color',colour,'DisplayName',['depth=' num2str(actual_depth)]);
+    else
+        plot(x_stars, y_star,'Color',colour,'HandleVisibility','off');
+    end
+%     name_d = strcat('depth=',num2str(depth))
+    legend('show')%([p(depth)],{name_d})
+%     legend(gca,'off');    
+%     legend('show');
     axis([-10 10 0 90])
     hold off
     
@@ -457,8 +473,8 @@ function x_min  = radius_diss_shift(dissims, x_matrix, sigma_n, TRAIN_MIN_DISP)
     subplot(1,2,2)
     hold on
     title("Troughs aligned")
-    plot(x_matrix(:,1)+x_min, dissims, '+')
-    plot(x_stars+x_min, y_star)
+    plot(x_matrix(:,1)+x_min, dissims, '+','Color',colour)
+    plot(x_stars+x_min, y_star,'Color',colour)
     grid on
     grid minor
     axis([-10 10 0 90])
