@@ -62,7 +62,7 @@ sigma_n_y = 1.14;%1.94;
 sigma_n_diss = 5;%0.5;%1.94;
 
 n_training_angles = 5;
-training_depths = 3:7;
+training_depths = 1:9;
 
 i_trainings = round(linspace(1,19,n_training_angles));%[10 15 19 5 1];
 i_train_data = 0;
@@ -456,7 +456,7 @@ function x_min  = radius_diss_shift(dissims, x_matrix, sigma_n, TRAIN_MIN_DISP, 
     colour = [(mod(depth,2)) 1-(mod(depth,9)/9) mod(depth,9)/9];
     plot(x_matrix(:,1), dissims, '+','Color',colour,'HandleVisibility','off')
     plot(x_matrix(:,1), dissims,'Color',colour,'HandleVisibility','off')
-    actual_depth = 5-depth;
+    actual_depth = 2.5-(depth/2);
     if legend_on
         plot(x_stars, y_star,'Color',colour,'DisplayName',['depth=' num2str(actual_depth)]);
     else
@@ -467,6 +467,8 @@ function x_min  = radius_diss_shift(dissims, x_matrix, sigma_n, TRAIN_MIN_DISP, 
 %     legend(gca,'off');    
 %     legend('show');
     axis([-10 10 0 90])
+    grid on
+    grid minor
     hold off
     
     %% Plot output
