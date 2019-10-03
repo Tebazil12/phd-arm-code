@@ -22,6 +22,7 @@ load('/home/lizzie/OneDrive/data/collect_data_3d_varyAngle_FIXEDslice2019-10-01_
 n_disps_per_radii = 21;
 n_angles = 19;
 n_depths = 9;
+
 current_number = 1;
 for depth = 1:n_depths
     for angle = 1:n_angles
@@ -32,8 +33,6 @@ for depth = 1:n_depths
     end
 end
 all_data{1};
-
-% n_angles = 19;
 
 
 TRIM_DATA = true;
@@ -63,24 +62,28 @@ sigma_n_y = 1.14;%1.94;
 sigma_n_diss = 5;%0.5;%1.94;
 
 n_training_angles = 5;
+training_depths = 4:6;
 
 i_trainings = round(linspace(1,19,n_training_angles));%[10 15 19 5 1];
-i_train_data = 1;
-for training_depths = 4:6%4:6
-    for num_training = 1:n_training_angles
+i_train_data = 0;
+i_depths = 0;
+for training_depth = training_depths
+    i_depths = i_depths+1;
+    for angle_num = 1:n_training_angles
+        i_train_data = i_train_data +1;
 
-        [dissims{i_train_data},...
-         y_train{i_train_data},...
-         x_diffs{i_train_data},...
-         y_diffs{i_train_data}] = process_taps(all_data{training_depths}{i_trainings(num_training)},...
+        [dissims{i_depths}{angle_num},...
+         y_train{i_depths}{angle_num},...
+         x_diffs{i_depths},...
+         y_diffs{i_depths}] = process_taps(all_data{training_depth}{i_trainings(angle_num)},...
                                                ref_diffs_norm,...
                                                ref_diffs_norm_max_ind,...
                                                sigma_n_diss,... 
                                                x_real(:,1),...
                                                ref_tap);
 
-        x_mins{i_train_data}  = radius_diss_shift(dissims{i_train_data}, x_real(:,1), sigma_n_diss,TRAIN_MIN_DISP);
-        if num_training == 1
+        x_mins{i_train_data}  = radius_diss_shift(dissims{i_depths}{angle_num}, x_real(:,1), sigma_n_diss,TRAIN_MIN_DISP);
+        if angle_num == 1
             if x_mins{1} ~= 0
                 warning("Reference tap is not the min at disp 0")
                 x_mins{1}
@@ -91,9 +94,8 @@ for training_depths = 4:6%4:6
                 x_real(:,i_train_data) = (x_real(:,i_train_data) >TRAIN_MIN_DISP).* x_real(:,i_train_data) + (x_real(:,i_train_data)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
             end
         end
-    i_train_data = i_train_data +1;
-    end
     
+    end
 end
 
 
@@ -112,11 +114,18 @@ size_x2 = size(x_real(TRAIN_RANGE,1));
 
 y_gplvm_input_train=[];
 disp_gplvm_input_train=[];
-for indexes = 1:n_training_angles
-y_gplvm_input_train = [y_gplvm_input_train;...
-                       y_train{indexes}(TRAIN_RANGE,:)];
-disp_gplvm_input_train = [disp_gplvm_input_train;...
-                       x_real(TRAIN_RANGE,indexes)];                   
+% Build matrix of y and x for use in gplvm
+
+for depth = 1:i_depths
+    for angle_num = 1:n_training_angles
+    y_gplvm_input_train = [y_gplvm_input_train;...
+                           y_train{depth}{angle_num}(TRAIN_RANGE,:)];
+    end
+end
+
+for indexes = 1:i_train_data                   
+    disp_gplvm_input_train = [disp_gplvm_input_train;...
+                           x_real(TRAIN_RANGE,indexes)];                   
 end
 
 
@@ -138,10 +147,12 @@ end
 %                                                                             -2*ones(size_x2)
 % ]
 mu_gplvm_input_train=[];
-for indexes = linspace(-2,2,n_training_angles)
-mu_gplvm_input_train = [mu_gplvm_input_train;...
-                       indexes*ones(size_x2)
-];
+for depths = 1:i_depths
+    for indexes = linspace(-2,2,n_training_angles)
+    mu_gplvm_input_train = [mu_gplvm_input_train;...
+                           indexes*ones(size_x2)
+    ];
+    end
 end
 %% %%%%%%%%%%%%% Training %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
 init_hyper_pars_2 = [1 300 5];
