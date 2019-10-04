@@ -1,9 +1,11 @@
 
+path = '/home/lizzie/OneDrive/data/collect_data_3d_varyAngle_FIXEDslice2019-10-01_1901/c45_01_20'; % a .mat file (but don't write .mat here)
 
-load('/home/lizzie/OneDrive/data/collect_data_3d_varyAngle_FIXEDslice2019-10-01_1901/c45_01_20.mat')
+file_to_convert = strcat(path, '.mat');
+load(file_to_convert)
 
+file_to_save_to = strcat(path, '.json');
 
-% create file of metadata 
-info_file = fopen('/home/lizzie/OneDrive/data/collect_data_3d_varyAngle_FIXEDslice2019-10-01_1901/all_data.json','w');
-fprintf(info_file, jsonencode(data));
-fclose(info_file);
+the_file = fopen(file_to_save_to ,'w');
+fprintf(the_file, jsonencode(data));
+fclose(the_file);
