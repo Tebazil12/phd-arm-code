@@ -37,4 +37,20 @@ x_real[0] = np.arange(-10,11) #actually -10 to 10 but +1 cuz python
 
 x_real_test = np.arange(-10,11) #actually -10 to 10 but +1 cuz python
 X_SHIFT_ON = False
+
+# Define reference tap & stuff
+ref_tap = all_data[5][10][11] 
+
+# Normalize data, so get distance moved not just relative position
+ref_diffs_norm = ref_tap - ref_tap[1] #normalized, assumes starts on no contact/all start in same position
+
+# find the frame in ref_diffs_norm with greatest diffs
+max_indexes = np.argmax(abs(ref_diffs_norm),0)
+
+mean_max_index = round(np.mean(max_indexes))
+
+
+
+
+
 dissims =[]
