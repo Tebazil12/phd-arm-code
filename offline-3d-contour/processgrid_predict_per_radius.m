@@ -45,6 +45,7 @@ TRAIN_RANGE = 1:21;
 
 x_real(:,1) = [-10:1:10]';
 x_real_test = [-10:1:10]';
+X_SHIFT_ON = false;
 dissims =[];
 
 %% Define reference tap & stuff
@@ -62,7 +63,7 @@ sigma_n_y = 1.14;%1.94;
 sigma_n_diss = 5;%0.5;%1.94;
 
 n_training_angles = 5;
-training_depths = 1:9;
+training_depths = 4:6;%1:9;
 
 i_trainings = round(linspace(1,19,n_training_angles));%[10 15 19 5 1];
 i_train_data = 0;
@@ -89,7 +90,11 @@ for training_depth = training_depths
                 x_mins{1}
             end
         else
-            x_real(:,i_train_data) = x_real(:,1) + x_mins{i_train_data} ; % so all minima are aligned
+            if X_SHIFT_ON
+                x_real(:,i_train_data) = x_real(:,1) + x_mins{i_train_data} ; % so all minima are aligned
+            else
+                x_real(:,i_train_data) = x_real(:,1);               
+            end
             if TRIM_DATA
                 x_real(:,i_train_data) = (x_real(:,i_train_data) >TRAIN_MIN_DISP).* x_real(:,i_train_data) + (x_real(:,i_train_data)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
             end
