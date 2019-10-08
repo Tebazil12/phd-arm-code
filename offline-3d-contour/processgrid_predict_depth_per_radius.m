@@ -35,7 +35,7 @@ end
 all_data{1};
 
 
-TRIM_DATA = true;
+TRIM_DATA = false;
 TRAIN_MIN_DISP = -10;
 
 
@@ -63,12 +63,13 @@ sigma_n_y = 1.14;%1.94;
 sigma_n_diss = 5;%0.5;%1.94;
 
 n_training_angles = 5;
-training_depths = [1 5 9];%4:6;%1:9;
+training_depth_indexes = [3 5 7];%4:6;%1:9;
+training_depths = (training_depth_indexes-5)/2 ; 
 
 i_trainings = round(linspace(1,19,n_training_angles));%[10 15 19 5 1];
 i_train_data = 0;
 i_depths = 0;
-for training_depth = training_depths
+for training_depth = training_depth_indexes
     i_depths = i_depths+1;
     for angle_num = 1:n_training_angles
         i_train_data = i_train_data +1;
@@ -83,22 +84,26 @@ for training_depth = training_depths
                                                x_real_train(:,1),...
                                                ref_tap);
         
-        x_mins{i_train_data}  = radius_diss_shift(dissims{i_depths}{angle_num}, x_real_train(:,1), sigma_n_diss,TRAIN_MIN_DISP,training_depth,angle_num==1);
-        if angle_num == 1
-            if x_mins{1} ~= 0
-                warning("Reference tap is not the min at disp 0")
-                x_mins{1}
-            end
-        else
-            if X_SHIFT_ON
-                x_real_train(:,i_train_data) = x_real_train(:,1) + x_mins{i_train_data} ; % so all minima are aligned
+        
+        if X_SHIFT_ON
+            x_mins{i_train_data}  = radius_diss_shift(dissims{i_depths}{angle_num}, x_real_train(:,1), sigma_n_diss,TRAIN_MIN_DISP,training_depth,angle_num==1);
+            if angle_num == 1
+                if x_mins{1} ~= 0
+                    warning("Reference tap is not the min at disp 0")
+                    x_mins{1}
+                end
             else
-                x_real_train(:,i_train_data) = x_real_train(:,1);               
+                if TRIM_DATA
+                        x_real_train(:,i_train_data) = (x_real_train(:,i_train_data) >TRAIN_MIN_DISP).* x_real_train(:,i_train_data) + (x_real_train(:,i_train_data)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
+                end
             end
-            if TRIM_DATA
-                x_real_train(:,i_train_data) = (x_real_train(:,i_train_data) >TRAIN_MIN_DISP).* x_real_train(:,i_train_data) + (x_real_train(:,i_train_data)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
-            end
+            x_real_train(:,i_train_data) = x_real_train(:,1) + x_mins{i_train_data} ; % so all minima are aligned
+        else
+            x_real_train(:,i_train_data) = x_real_train(:,1);               
         end
+            
+        
+        
     
     end
 end
@@ -161,16 +166,17 @@ for depths = 1:i_depths
 end
 
 depth_gplvm_input_train = reshape(repmat(training_depths,n_disps_per_radii*n_training_angles,1), length(mu_gplvm_input_train),1);
+
+x_gplvm_input_train = [disp_gplvm_input_train mu_gplvm_input_train depth_gplvm_input_train];
 %% %%%%%%%%%%%%% Training %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
 fprintf('Training GPLVM\n')
-init_hyper_pars_2 = [1 300 5 1];
+init_hyper_pars_2 = [1 300 5 0.5];
 
 [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(opt_pars(1), ...
                                                           [opt_pars(2) opt_pars(3) opt_pars(4)], ...
                                                           sigma_n_y,...
-                                                          y_gplvm_input_train ,[disp_gplvm_input_train ...
-                                                                                mu_gplvm_input_train...
-                                                                                depth_gplvm_input_train]),...
+                                                          y_gplvm_input_train ,...
+                                                          x_gplvm_input_train),...
                             init_hyper_pars_2,...
                             optimoptions('fminunc','Display','off','MaxFunEvals',10000));
 fprintf('Finished training GPLVM\n')                        
@@ -193,7 +199,7 @@ l_mu = par(3)
 l_depth = par(4)
 % par(4)
 % par(5)
-x_gplvm_input_train = [disp_gplvm_input_train mu_gplvm_input_train depth_gplvm_input_train];
+
 
 
 %% Visualize learnt model
@@ -204,11 +210,12 @@ fprintf('Calculating predictions\n')
 n_bad_flags = 0;
 n_flags = 0;
 
-test_depths = 1:9;
+test_depth_indexes = 1:9;
+test_depths = (test_depth_indexes-5)/2;
 i_tests =0;
 
 %for each depth 
-for test_depth = test_depths
+for test_depth = test_depth_indexes
     % for each radius
     for i_angle = 1:n_angles
         i_tests = i_tests +1;
@@ -221,14 +228,16 @@ for test_depth = test_depths
                                       sigma_n_diss,...
                                       x_real_test(:,1),...
                                       ref_tap);
-        if i_tests ~= 1
-            x_min  = radius_diss_shift(dissims_test, x_real_test(:,1), sigma_n_diss,TRAIN_MIN_DISP,test_depth,true);
-            if X_SHIFT_ON
+        
+        if X_SHIFT_ON
+            if i_tests ~= 1
+                x_min  = radius_diss_shift(dissims_test, x_real_test(:,1), sigma_n_diss,TRAIN_MIN_DISP,test_depth,true);
                 x_real_test(:,i_tests) = x_real_test(:,1) + x_min;
-            else
-                x_real_test(:,i_tests) = x_real_test(:,1);
             end
+        else
+            x_real_test(:,i_tests) = x_real_test(:,1);
         end
+        
         if TRIM_DATA
             x_real_test(:,i_tests) = (x_real_test(:,i_tests) >=TRAIN_MIN_DISP).* x_real_test(:,i_tests)...
                                 + (x_real_test(:,i_tests)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
@@ -286,9 +295,9 @@ n_flags
 
 figure(3)
 clf
-subplot(1,2,2)
+subplot(1,3,2)
 hold all
-title_string = strcat("Train & Test Offline \mu Error: No. training angles=", num2str(n_training_angles), ", No.training depths=", num2str(length(training_depths)));
+title_string = strcat("Train & Test Offline \mu Error: No. training angles=", num2str(n_training_angles), ", No.training depths=", num2str(length(training_depth_indexes)));
 title(title_string)
 plot([-2 2],[0 0],'k')
 % plot(x_real(TEST_RANGE,1:end),new_mu(:,TEST_RANGE,1)','+')
@@ -297,14 +306,14 @@ plot([-2 2],[0 0],'k')
 % xlabel("Real Displacemt / mm")
 % ylabel("mu / mm")
 
-expected_mu_block = repmat([-2:4/18:2],1,length(test_depths));%-2:4/18:2;
+expected_mu_block = repmat([-2:4/18:2],1,length(test_depth_indexes));%-2:4/18:2;
 expected_mu = -2:4/18:2;
-for test_depth_i = 1:length(test_depths)
+for test_depth_i = 1:length(test_depth_indexes)
     %hold on
 %     hold on
     stem(expected_mu,new_mu(((test_depth_i-1)*n_angles)+1:(test_depth_i)*n_angles,1,1)'-expected_mu,'x')
 end
-mean(abs(new_mu(:,1,1)'-expected_mu_block))
+mu_mean_error = mean(abs(new_mu(:,1,1)'-expected_mu_block))
 plot(x_gplvm_input_train(:,2),x_gplvm_input_train(:,2)-x_gplvm_input_train(:,2),'ok','MarkerFaceColor','r') %show where training lines are
 %axis([-2.2 2.2 -0.171 0.33 ])
 axis([-2.2 2.2 -3 3 ])
@@ -315,9 +324,37 @@ grid on
 grid minor
 hold off
 
-subplot(1,2,1)
+
+subplot(1,3,3)
+hold all
+title_string = strcat("Train & Test Offline depth Error: No. training angles=", num2str(n_training_angles), ", No.training depths=", num2str(length(training_depth_indexes)));
+title(title_string)
+plot([-2 2],[0 0],'k')
+
+test_depths
+new_depth
+% expected_depth_block = repmat([-2:4/18:2],1,length(test_depths));%-2:4/18:2;
+expected_depths = reshape(repmat(test_depths,n_angles,1), length(test_depths)*n_angles,1);
+
+differences = new_depth(:,1) - expected_depths;
+
+stem(expected_depths,differences,'x')
+
+depth_mean_error = mean(abs(differences))
+% plot(x_gplvm_input_train(:,2),x_gplvm_input_train(:,2)-x_gplvm_input_train(:,2),'ok','MarkerFaceColor','r') %show where training lines are
+%axis([-2.2 2.2 -0.171 0.33 ])
+% axis([-2.2 2.2 -3 3 ])
+
+ylabel("Error in predicted depth")
+xlabel("Expected depth")
+grid on
+grid minor
+hold off
+
+
+subplot(1,3,1)
 hold on
-title_string = strcat("Train & Test Offline 3D: No. training angles=", num2str(n_training_angles), ", No.training depths=", num2str(length(training_depths)));
+title_string = strcat("Train & Test Offline 3D: No. training angles=", num2str(n_training_angles), ", No.training depths=", num2str(length(training_depth_indexes)));
 title(title_string)
 
 % plot3(x_real(TEST_RANGE,1:end),...
