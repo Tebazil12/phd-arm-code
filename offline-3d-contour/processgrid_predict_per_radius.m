@@ -25,9 +25,9 @@ n_depths = 9;
 
 current_number = 1;
 for depth = 1:n_depths
-    for angle = 1:n_angles
+    for i_angle = 1:n_angles
         for disp = 1:n_disps_per_radii
-            all_data{depth}{angle}{1,disp}= data{1,current_number};
+            all_data{depth}{i_angle}{1,disp}= data{1,current_number};
             current_number = current_number + 1;
         end
     end
@@ -43,8 +43,8 @@ TRAIN_MIN_DISP = -10;
 TEST_RANGE = 1:21;
 TRAIN_RANGE = 1:21;
 
-x_real(:,1) = [-10:1:10]';
-x_real_test = [-10:1:10]';
+x_real_train(:,1) = [-10:1:10]';
+x_real_test(:,1) = [-10:1:10]';
 X_SHIFT_ON = false;
 dissims =[];
 
@@ -63,7 +63,7 @@ sigma_n_y = 1.14;%1.94;
 sigma_n_diss = 5;%0.5;%1.94;
 
 n_training_angles = 5;
-training_depths = 4:6;%1:9;
+training_depths = [1 5 9];%4:6;%1:9;
 
 i_trainings = round(linspace(1,19,n_training_angles));%[10 15 19 5 1];
 i_train_data = 0;
@@ -80,10 +80,10 @@ for training_depth = training_depths
                                                ref_diffs_norm,...
                                                ref_diffs_norm_max_ind,...
                                                sigma_n_diss,... 
-                                               x_real(:,1),...
+                                               x_real_train(:,1),...
                                                ref_tap);
         
-        x_mins{i_train_data}  = radius_diss_shift(dissims{i_depths}{angle_num}, x_real(:,1), sigma_n_diss,TRAIN_MIN_DISP,training_depth,angle_num==1);
+        x_mins{i_train_data}  = radius_diss_shift(dissims{i_depths}{angle_num}, x_real_train(:,1), sigma_n_diss,TRAIN_MIN_DISP,training_depth,angle_num==1);
         if angle_num == 1
             if x_mins{1} ~= 0
                 warning("Reference tap is not the min at disp 0")
@@ -91,12 +91,12 @@ for training_depth = training_depths
             end
         else
             if X_SHIFT_ON
-                x_real(:,i_train_data) = x_real(:,1) + x_mins{i_train_data} ; % so all minima are aligned
+                x_real_train(:,i_train_data) = x_real_train(:,1) + x_mins{i_train_data} ; % so all minima are aligned
             else
-                x_real(:,i_train_data) = x_real(:,1);               
+                x_real_train(:,i_train_data) = x_real_train(:,1);               
             end
             if TRIM_DATA
-                x_real(:,i_train_data) = (x_real(:,i_train_data) >TRAIN_MIN_DISP).* x_real(:,i_train_data) + (x_real(:,i_train_data)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
+                x_real_train(:,i_train_data) = (x_real_train(:,i_train_data) >TRAIN_MIN_DISP).* x_real_train(:,i_train_data) + (x_real_train(:,i_train_data)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
             end
         end
     
@@ -107,7 +107,7 @@ end
 %% Optimize hyper-params for training
 
 init_hyper_pars = [1 300 5];
-size_x2 = size(x_real(TRAIN_RANGE,1));
+size_x2 = size(x_real_train(TRAIN_RANGE,1));
 
 
 % y_gplvm_input_train = [y_train{1}(TRAIN_RANGE,:);...
@@ -130,7 +130,7 @@ end
 
 for indexes = 1:i_train_data                   
     disp_gplvm_input_train = [disp_gplvm_input_train;...
-                           x_real(TRAIN_RANGE,indexes)];                   
+                           x_real_train(TRAIN_RANGE,indexes)];                   
 end
 
 
@@ -200,68 +200,74 @@ fprintf('Calculating predictions\n')
 n_bad_flags = 0;
 n_flags = 0;
 
-test_depth = 5;
+test_depths = 1:9;
+i_tests =0;
 
-% for each radius
-for set_num = 1:n_angles
-    
-    [dissims_test,...
-     y_test,...
-     x_diffs_test,...
-     y_diffs_test] = process_taps(all_data{test_depth}{set_num},...
-                                  ref_diffs_norm,...
-                                  ref_diffs_norm_max_ind,...
-                                  sigma_n_diss,...
-                                  x_real(:,1),...
-                                  ref_tap);
-    if set_num ~= 1
-        x_min  = radius_diss_shift(dissims_test, x_real(:,1), sigma_n_diss,TRAIN_MIN_DISP,test_depth,true);
+%for each depth 
+for test_depth = test_depths
+    % for each radius
+    for i_angle = 1:n_angles
+        i_tests = i_tests +1;
+        [dissims_test,...
+         y_test,...
+         x_diffs_test,...
+         y_diffs_test] = process_taps(all_data{test_depth}{i_angle},...
+                                      ref_diffs_norm,...
+                                      ref_diffs_norm_max_ind,...
+                                      sigma_n_diss,...
+                                      x_real_test(:,1),...
+                                      ref_tap);
+        if i_tests ~= 1
+            x_min  = radius_diss_shift(dissims_test, x_real_test(:,1), sigma_n_diss,TRAIN_MIN_DISP,test_depth,true);
+            if X_SHIFT_ON
+                x_real_test(:,i_tests) = x_real_test(:,1) + x_min;
+            else
+                x_real_test(:,i_tests) = x_real_test(:,1);
+            end
+        end
+        if TRIM_DATA
+            x_real_test(:,i_tests) = (x_real_test(:,i_tests) >=TRAIN_MIN_DISP).* x_real_test(:,i_tests)...
+                                + (x_real_test(:,i_tests)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
+        end
 
-        x_real(:,set_num) = x_real(:,1) + x_min;
+
+        init_latent_vars = [0];
+    %%%%%%%%%%%%%% Testing %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % fprintf('Testing GPLVM\n')
+    % fmincon(fun,x0,A,b,Aeq,beq,lb,ub)
+
+        [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f,...
+                                                                  [l_disp l_mu],...
+                                                                  sigma_n_y,...
+                                                                  [y_gplvm_input_train; y_test(TEST_RANGE,:)],...
+                                                                  [x_gplvm_input_train; x_real_test(TEST_RANGE,i_tests) ones(size(TEST_RANGE))'*opt_pars(1)]),...
+                                    init_latent_vars,...
+                                    optimoptions('fminunc','Display','off'));
+
+    % 
+    %     [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f,...
+    %                                                               [l_disp l_mu],...
+    %                                                               sigma_n_y,...
+    %                                                               [y_gplvm_input; y_gplvm_input(1:21,:)],...
+    %                                                               [x_gplvm_input; x_gplvm_input(22:42,1) ones(21,1)*opt_pars(1) ]),...
+    %                                 init_latent_vars,...
+    %                                 optimoptions('fminunc','Display','off'));
+
+    % fprintf('Finished testing GPLVM\n')
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        if flag < 1
+            n_bad_flags = n_bad_flags +1;
+            flag
+        end 
+
+        new_mu(i_tests, TEST_RANGE,:) = par;
+        dissims_tests(i_tests, TEST_RANGE) = dissims_test(TEST_RANGE);
+
+        n_flags = n_flags +1;
+
+        fprintf('.');
     end
-    if TRIM_DATA
-        x_real(:,set_num) = (x_real(:,set_num) >=TRAIN_MIN_DISP).* x_real(:,set_num)...
-                            + (x_real(:,set_num)<TRAIN_MIN_DISP).* TRAIN_MIN_DISP;
-    end
-        
-    
-    init_latent_vars = [0];
-%%%%%%%%%%%%%% Testing %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% fprintf('Testing GPLVM\n')
-% fmincon(fun,x0,A,b,Aeq,beq,lb,ub)
-
-    [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f,...
-                                                              [l_disp l_mu],...
-                                                              sigma_n_y,...
-                                                              [y_gplvm_input_train; y_test(TEST_RANGE,:)],...
-                                                              [x_gplvm_input_train; x_real(TEST_RANGE,set_num) ones(size(TEST_RANGE))'*opt_pars(1)]),...
-                                init_latent_vars,...
-                                optimoptions('fminunc','Display','off'));
-
-% 
-%     [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f,...
-%                                                               [l_disp l_mu],...
-%                                                               sigma_n_y,...
-%                                                               [y_gplvm_input; y_gplvm_input(1:21,:)],...
-%                                                               [x_gplvm_input; x_gplvm_input(22:42,1) ones(21,1)*opt_pars(1) ]),...
-%                                 init_latent_vars,...
-%                                 optimoptions('fminunc','Display','off'));
-
-% fprintf('Finished testing GPLVM\n')
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if flag < 1
-        n_bad_flags = n_bad_flags +1;
-        flag
-    end 
-
-    new_mu(set_num, TEST_RANGE,:) = par;
-    dissims_tests(set_num, TEST_RANGE) = dissims_test(TEST_RANGE);
-
-    n_flags = n_flags +1;
-
-    fprintf('.');
-    
-    fprintf('\n')
+        fprintf('\n')
 end
 
 % Print things out
@@ -276,19 +282,25 @@ n_flags
 figure(3)
 clf
 subplot(1,2,2)
-hold on
-title("Train & Test Offline \mu Error - 5 Input Lines")
-
+hold all
+title_string = strcat("Train & Test Offline \mu Error: No. training angles=", num2str(n_training_angles), ", No.training depths=", num2str(length(training_depths)));
+title(title_string)
+plot([-2 2],[0 0],'k')
 % plot(x_real(TEST_RANGE,1:end),new_mu(:,TEST_RANGE,1)','+')
 % plot(x_real(TEST_RANGE,1:end),new_mu(:,TEST_RANGE,1)')
 % plot(x_gplvm_input_train(:,1),x_gplvm_input_train(:,2),'o')
 % xlabel("Real Displacemt / mm")
 % ylabel("mu / mm")
 
+expected_mu_block = repmat([-2:4/18:2],1,length(test_depths));%-2:4/18:2;
 expected_mu = -2:4/18:2;
-bar(expected_mu,new_mu(:,1,1)'-expected_mu)
-mean(abs(new_mu(:,1,1)'-expected_mu))
-plot(x_gplvm_input_train(:,2),x_gplvm_input_train(:,2)-x_gplvm_input_train(:,2),'ok','MarkerFaceColor','r')
+for test_depth_i = 1:length(test_depths)
+    %hold on
+%     hold on
+    stem(expected_mu,new_mu(((test_depth_i-1)*n_angles)+1:(test_depth_i)*n_angles,1,1)'-expected_mu,'x')
+end
+mean(abs(new_mu(:,1,1)'-expected_mu_block))
+plot(x_gplvm_input_train(:,2),x_gplvm_input_train(:,2)-x_gplvm_input_train(:,2),'ok','MarkerFaceColor','r') %show where training lines are
 %axis([-2.2 2.2 -0.171 0.33 ])
 axis([-2.2 2.2 -3 3 ])
 
@@ -300,13 +312,14 @@ hold off
 
 subplot(1,2,1)
 hold on
-title("Train & Test Offline 3D - 5 Input Lines")
+title_string = strcat("Train & Test Offline 3D: No. training angles=", num2str(n_training_angles), ", No.training depths=", num2str(length(training_depths)));
+title(title_string)
 
 % plot3(x_real(TEST_RANGE,1:end),...
 %       new_mu(:,TEST_RANGE,1)',...
 %       dissims_tests(:,TEST_RANGE)')
   
-surf(x_real(TEST_RANGE,1:end),...
+surf(x_real_test(TEST_RANGE,1:end),...
       new_mu(:,TEST_RANGE,1)',...
       dissims_tests(:,TEST_RANGE)')
   
