@@ -81,7 +81,7 @@ x_real_test = [-10:1:10]';
 dissims =[];
 
 %% Define reference tap & stuff
-reference_disp_indexes = [9 10 11];
+reference_disp_indexes = [10 11 12];
 for i = 1:length(reference_disp_indexes)
     ref_tap{i} = all_data{10}{reference_disp_indexes(i)};%(:,:,:); 
 
@@ -150,27 +150,28 @@ mu_gplvm_input_train = [mu_gplvm_input_train;...
                         ones(21,1)*(training_indexes(line)-10)/4.5];                      
 end
 
-real_shift = 3;
+real_shift = -3;
 disp_gplvm_input_train = disp_gplvm_input_train + real_shift;
 
 y_ref_taps = [processed_ref_tap{1}(:,:,1) processed_ref_tap{1}(:,:,2);...
               processed_ref_tap{2}(:,:,1) processed_ref_tap{2}(:,:,2);...
               processed_ref_tap{3}(:,:,1) processed_ref_tap{3}(:,:,2)];
           
-disp_ref_taps = [reference_disp_indexes-10]';
+disp_ref_taps = [reference_disp_indexes-11]';
 
 mu_ref_taps = [zeros(size(reference_disp_indexes))]';
 
 
-%% %%%%%%%%%%%%% Training 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
+%% %%%%%%%%%%%%% Training 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
+training_index = 1;
 init_hyper_pars_2 = [1 300 5];
 
 [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(opt_pars(1), ...
                                                           [opt_pars(2) opt_pars(3)], ...
                                                           sigma_n_y,...
-                                                          [y_train{1}(MIN_I_TRAIN:MAX_I_TRAIN,:)] ,...
-                                                          [[x_real(MIN_I_TRAIN:MAX_I_TRAIN,line) + real_shift] ...
-                                                           [ones(21,1)*(training_indexes(1)-10)/4.5]]),...
+                                                          [y_train{training_index}(MIN_I_TRAIN:MAX_I_TRAIN,:)] ,...
+                                                          [[x_real(MIN_I_TRAIN:MAX_I_TRAIN,training_index) + real_shift] ...
+                                                           [ones(21,1)*(training_indexes(training_index)-10)/4.5]]),...
                             init_hyper_pars_2,...
                             optimoptions('fminunc','Display','off','MaxFunEvals',10000));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
