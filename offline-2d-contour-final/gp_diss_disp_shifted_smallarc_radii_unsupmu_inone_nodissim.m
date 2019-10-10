@@ -150,6 +150,9 @@ mu_gplvm_input_train = [mu_gplvm_input_train;...
                         ones(21,1)*(training_indexes(line)-10)/4.5];                      
 end
 
+real_shift = 2;
+disp_gplvm_input_train = disp_gplvm_input_train + real_shift;
+
 y_ref_taps = [processed_ref_tap{1}(:,:,1) processed_ref_tap{1}(:,:,2);...
               processed_ref_tap{2}(:,:,1) processed_ref_tap{2}(:,:,2);...
               processed_ref_tap{3}(:,:,1) processed_ref_tap{3}(:,:,2)];
@@ -221,6 +224,7 @@ par
 % sigma_f = par(1)
 % l_disp = par(2)
 % l_mu = par(3)
+real_shift
 estimated_shift = par(1)
 % par(4)
 % par(5)
