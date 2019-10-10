@@ -159,15 +159,15 @@ disp_ref_taps = [reference_disp_indexes-10]';
 mu_ref_taps = [zeros(size(reference_disp_indexes))]';
 
 
-%% %%%%%%%%%%%%% Training %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
-init_hyper_pars_2 = [1 300 5 0];
+%% %%%%%%%%%%%%% Training 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
+init_hyper_pars_2 = [1 300 5];
 
 [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(opt_pars(1), ...
                                                           [opt_pars(2) opt_pars(3)], ...
                                                           sigma_n_y,...
-                                                          [y_ref_taps; y_gplvm_input_train] ,...
-                                                          [[disp_ref_taps; disp_gplvm_input_train+opt_pars(4)] ...
-                                                           [mu_ref_taps; mu_gplvm_input_train]]),...
+                                                          [y_gplvm_input_train] ,...
+                                                          [[disp_gplvm_input_train] ...
+                                                           [mu_gplvm_input_train]]),...
                             init_hyper_pars_2,...
                             optimoptions('fminunc','Display','off','MaxFunEvals',10000));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -186,7 +186,42 @@ par
 sigma_f = par(1)
 l_disp = par(2)
 l_mu = par(3)
-estimated_shift = par(4)
+% estimated_shift = par(4)
+% par(4)
+% par(5)
+% total_x_gplvm_input_train = [[disp_ref_taps; disp_gplvm_input_train+estimated_shift] ...
+%                              [mu_ref_taps; mu_gplvm_input_train]];
+% 
+% total_y_gplvm_input_train = [y_ref_taps; y_gplvm_input_train]
+
+%% %%%%%%%%%%%%% Training 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
+init_hyper_pars_3 = [0];
+
+[par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f, ...
+                                                          [l_disp l_mu], ...
+                                                          sigma_n_y,...
+                                                          [y_ref_taps; y_gplvm_input_train] ,...
+                                                          [[disp_ref_taps; disp_gplvm_input_train+opt_pars(1)] ...
+                                                           [mu_ref_taps; mu_gplvm_input_train]]),...
+                            init_hyper_pars_3,...
+                            optimoptions('fminunc','Display','off','MaxFunEvals',10000));
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+flag
+if flag < 1
+    warning("fminsearch was not happy")
+    flag
+end 
+
+% if round(par(1),1) == 0 || round(par(2),1) == 0
+%     warning("A hyper-parameter is zero! Probably a bad fit")
+% end
+
+par
+
+% sigma_f = par(1)
+% l_disp = par(2)
+% l_mu = par(3)
+estimated_shift = par(1)
 % par(4)
 % par(5)
 total_x_gplvm_input_train = [[disp_ref_taps; disp_gplvm_input_train+estimated_shift] ...
@@ -331,7 +366,8 @@ expected_mu = -2:4/18:2;
 bar(expected_mu,new_mu(:,1,1)'-expected_mu)
 mean(abs(new_mu(:,1,1)'-expected_mu))
 plot(total_x_gplvm_input_train(:,2),total_x_gplvm_input_train(:,2)-total_x_gplvm_input_train(:,2),'ok','MarkerFaceColor','r')
-axis([-2.2 2.2 -0.171 0.33 ])
+% axis([-2.2 2.2 -0.171 0.33 ])
+axis([-2.2 2.2 -2 2])
 
 ylabel("Error in predicted \mu")
 xlabel("Expected \mu")
