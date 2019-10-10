@@ -98,7 +98,7 @@ end
 sigma_n_y = 1.14;%1.94;
 sigma_n_diss = 5;%0.5;%1.94;
 
-training_indexes = [10 15]; % 19 5 1];
+training_indexes = [10 15 ];%19 5 1];
 for num_training = 1:length(training_indexes)
     
     [dissims{num_training},...
@@ -150,7 +150,7 @@ mu_gplvm_input_train = [mu_gplvm_input_train;...
                         ones(21,1)*(training_indexes(line)-10)/4.5];                      
 end
 
-real_shift = -3;
+real_shift = 3;
 disp_gplvm_input_train = disp_gplvm_input_train + real_shift;
 
 y_ref_taps = [processed_ref_tap{1}(:,:,1) processed_ref_tap{1}(:,:,2);...
@@ -168,9 +168,9 @@ init_hyper_pars_2 = [1 300 5];
 [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(opt_pars(1), ...
                                                           [opt_pars(2) opt_pars(3)], ...
                                                           sigma_n_y,...
-                                                          [y_gplvm_input_train(1:21)] ,...
-                                                          [[disp_gplvm_input_train(1:21)] ...
-                                                           [mu_gplvm_input_train(1:21)]]),...
+                                                          [y_train{1}(MIN_I_TRAIN:MAX_I_TRAIN,:)] ,...
+                                                          [[x_real(MIN_I_TRAIN:MAX_I_TRAIN,line) + real_shift] ...
+                                                           [ones(21,1)*(training_indexes(1)-10)/4.5]]),...
                             init_hyper_pars_2,...
                             optimoptions('fminunc','Display','off','MaxFunEvals',10000));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -196,7 +196,7 @@ l_mu = par(3)
 %                              [mu_ref_taps; mu_gplvm_input_train]];
 % 
 % total_y_gplvm_input_train = [y_ref_taps; y_gplvm_input_train]
-
+% for line = 1:length(training_indexes)
 %% %%%%%%%%%%%%% Training 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
 init_hyper_pars_3 = [0];
 
@@ -228,6 +228,8 @@ real_shift
 estimated_shift = par(1)
 % par(4)
 % par(5)
+% end
+
 total_x_gplvm_input_train = [[disp_ref_taps; disp_gplvm_input_train+estimated_shift] ...
                              [mu_ref_taps; mu_gplvm_input_train]];
 
