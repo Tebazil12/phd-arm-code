@@ -98,7 +98,7 @@ end
 sigma_n_y = 1.14;%1.94;
 sigma_n_diss = 5;%0.5;%1.94;
 
-training_angle_indexes = [10 15 ];%19 5 1];
+training_angle_indexes = [10 15 19 5 1];
 for num_training = 1:length(training_angle_indexes)
     
     [dissims{num_training},...
@@ -139,18 +139,18 @@ size_x2 = size(x_real(MIN_I_TRAIN:MAX_I_TRAIN,1));
 y_gplvm_input_train=[];
 disp_gplvm_input_train=[];
 mu_gplvm_input_train=[];
-for line = 1:length(training_angle_indexes)
-y_gplvm_input_train = [y_gplvm_input_train;...
-                       y_train{line}(MIN_I_TRAIN:MAX_I_TRAIN,:)];
+% for line = 1:length(training_angle_indexes)
+% y_gplvm_input_train = [y_gplvm_input_train;...
+%                        y_train{line}(MIN_I_TRAIN:MAX_I_TRAIN,:)];
+% 
+% disp_gplvm_input_train = [disp_gplvm_input_train;...    
+%                           x_real(MIN_I_TRAIN:MAX_I_TRAIN,line)];
+% 
+% mu_gplvm_input_train = [mu_gplvm_input_train;...
+%                         ones(21,1)*(training_angle_indexes(line)-10)/4.5];                      
+% end
 
-disp_gplvm_input_train = [disp_gplvm_input_train;...    
-                          x_real(MIN_I_TRAIN:MAX_I_TRAIN,line)];
-
-mu_gplvm_input_train = [mu_gplvm_input_train;...
-                        ones(21,1)*(training_angle_indexes(line)-10)/4.5];                      
-end
-
-real_shift = 3;
+real_shift = -3;
 disp_gplvm_input_train = disp_gplvm_input_train + real_shift;
 
 y_ref_taps = [processed_ref_tap{1}(:,:,1) processed_ref_tap{1}(:,:,2);...
@@ -197,44 +197,56 @@ l_mu = par(3)
 %                              [mu_ref_taps; mu_gplvm_input_train]];
 % 
 % total_y_gplvm_input_train = [y_ref_taps; y_gplvm_input_train]
-% for line = 1:length(training_indexes)
-%% %%%%%%%%%%%%% Training 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
-init_hyper_pars_3 = [0];
+for line = 1:length(training_angle_indexes)
+    
+    y_gplvm_input_train = [y_gplvm_input_train;...
+                       y_train{line}(MIN_I_TRAIN:MAX_I_TRAIN,:)];
 
-[par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f, ...
-                                                          [l_disp l_mu], ...
-                                                          sigma_n_y,...
-                                                          [y_ref_taps; y_gplvm_input_train] ,...
-                                                          [[disp_ref_taps; disp_gplvm_input_train+opt_pars(1)] ...
-                                                           [mu_ref_taps; mu_gplvm_input_train]]),...
-                            init_hyper_pars_3,...
-                            optimoptions('fminunc','Display','off','MaxFunEvals',10000));
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-flag
-if flag < 1
-    warning("fminsearch was not happy")
+    
+
+    mu_gplvm_input_train = [mu_gplvm_input_train;...
+                                ones(21,1)*(training_angle_indexes(line)-10)/4.5]; 
+    %% %%%%%%%%%%%%% Training 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
+    init_hyper_pars_3 = [0];
+
+    [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f, ...
+                                                              [l_disp l_mu], ...
+                                                              sigma_n_y,...
+                                                              [y_ref_taps; y_gplvm_input_train] ,...
+                                                              [[disp_ref_taps; disp_gplvm_input_train; x_real(MIN_I_TRAIN:MAX_I_TRAIN,line)+real_shift+opt_pars(1)] ...
+                                                               [mu_ref_taps; mu_gplvm_input_train]]),...
+                                init_hyper_pars_3,...
+                                optimoptions('fminunc','Display','off','MaxFunEvals',10000));
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     flag
-end 
+    if flag < 1
+        warning("fminsearch was not happy")
+        flag
+    end 
 
-% if round(par(1),1) == 0 || round(par(2),1) == 0
-%     warning("A hyper-parameter is zero! Probably a bad fit")
-% end
+    % if round(par(1),1) == 0 || round(par(2),1) == 0
+    %     warning("A hyper-parameter is zero! Probably a bad fit")
+    % end
 
-par
+    par
 
-% sigma_f = par(1)
-% l_disp = par(2)
-% l_mu = par(3)
-real_shift
-estimated_shift = par(1)
-% par(4)
-% par(5)
-% end
+    % sigma_f = par(1)
+    % l_disp = par(2)
+    % l_mu = par(3)
+    real_shift
+    estimated_shift = par(1)
+    % par(4)
+    % par(5)
+    
+    disp_gplvm_input_train = [disp_gplvm_input_train;...    
+                              x_real(MIN_I_TRAIN:MAX_I_TRAIN,line)+real_shift+estimated_shift];
+    
+end
 
-total_x_gplvm_input_train = [[disp_ref_taps; disp_gplvm_input_train+estimated_shift] ...
+total_x_gplvm_input_train = [[disp_ref_taps; disp_gplvm_input_train] ...
                              [mu_ref_taps; mu_gplvm_input_train]];
 
-total_y_gplvm_input_train = [y_ref_taps; y_gplvm_input_train]
+total_y_gplvm_input_train = [y_ref_taps; y_gplvm_input_train];
 %% Visualize learnt model
 %test_plot(x_gplvm_input_train, y_gplvm_input_train, sigma_f, l_disp, l_mu, sigma_n_y,ref_tap,ref_diffs_norm,ref_diffs_norm_max_ind)
 
