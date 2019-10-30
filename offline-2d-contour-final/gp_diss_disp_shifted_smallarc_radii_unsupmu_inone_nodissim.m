@@ -163,9 +163,11 @@ mu_ref_taps = [zeros(size(reference_disp_indexes))]';
 
 
 %% %%%%%%%%%%%%% Training 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
-training_index = 2;
+training_index = 1;
 init_hyper_pars_2 = [1 300 5];
 
+% nb, here the exact value of mu is known which won't hold online, it'll
+% simply be 0 (this may not matter though)
 [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(opt_pars(1), ...
                                                           [opt_pars(2) opt_pars(3)], ...
                                                           sigma_n_y,...
@@ -197,6 +199,9 @@ l_mu = par(3)
 %                              [mu_ref_taps; mu_gplvm_input_train]];
 % 
 % total_y_gplvm_input_train = [y_ref_taps; y_gplvm_input_train]
+
+%% Optimise shift
+shifts =[];
 for line = 1:length(training_angle_indexes)
     
     y_gplvm_input_train = [y_gplvm_input_train;...
@@ -240,6 +245,7 @@ for line = 1:length(training_angle_indexes)
     
     disp_gplvm_input_train = [disp_gplvm_input_train;...    
                               x_real(MIN_I_TRAIN:MAX_I_TRAIN,line)+real_shift+estimated_shift];
+    shifts = [shifts; estimated_shift];
     
 end
 
