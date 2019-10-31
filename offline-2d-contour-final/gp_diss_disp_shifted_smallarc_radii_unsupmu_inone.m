@@ -321,7 +321,8 @@ expected_mu = -2:4/18:2;
 bar(expected_mu,new_mu(:,1,1)'-expected_mu)
 mean(abs(new_mu(:,1,1)'-expected_mu))
 plot(x_gplvm_input_train(:,2),x_gplvm_input_train(:,2)-x_gplvm_input_train(:,2),'ok','MarkerFaceColor','r')
-axis([-2.2 2.2 -0.171 0.33 ])
+% axis([-2.2 2.2 -0.171 0.33 ])
+axis([-2.2 2.2 -2 2])
 
 ylabel("Error in predicted \mu")
 xlabel("Expected \mu")
@@ -381,8 +382,16 @@ function [dissims, y_for_real, x_diffs, y_diffs] = process_taps(radii_data, ref_
         else
             error("Y not chosen")
         end
-        diss = norm([differences(:,:,1)'; differences(:,:,2)']);
+%         diss = norm([differences(:,:,1)'; differences(:,:,2)']);
 %         diss = pdist2(differences(:,:,1),differences(:,:,2), 'euclidean');
+%         diss = pdist2(ref_diffs_norm(ref_diffs_norm_max_ind ,:  ,:),...
+%                 current_tap_data_norm(average_max_i,:,:), 'cosine');
+%         diss = pdist2(zeros(1,size(differences(:,:,2),2)*2), [differences(:,:,1), differences(:,:,2)], 'euclidean');
+        diss = pdist2([ref_diffs_norm(ref_diffs_norm_max_ind ,:  ,1) ref_diffs_norm(ref_diffs_norm_max_ind ,:  ,2)], [current_tap_data_norm(average_max_i,:,1), current_tap_data_norm(average_max_i,:,2)], 'cosine');
+        
+        if isnan(diss)
+            diss=0;
+        end
         
         dissims =[dissims diss];
 %         x_diffs = [x_diffs sum(differences(:,:,1))]; % sum of all dimensions, to give 2D dissim measure
