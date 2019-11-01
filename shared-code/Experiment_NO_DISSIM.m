@@ -201,7 +201,7 @@ classdef Experiment_NO_DISSIM < handle
             end
 
             % calc dissim, align to 0 (edge)
-            [dissims, ys_for_real] = self.process_taps(self.data{current_step});
+            ys_for_real = self.process_taps(self.data{current_step});
             xs_default = [-10:10]';
             x_min  = self.radius_diss_shift(dissims(n_useless_taps+1:end), xs_default);%remove first 3 points as not in line
 
@@ -257,12 +257,12 @@ classdef Experiment_NO_DISSIM < handle
 
         end%good
         
-        function [dissims, y_processed] = process_taps(self,radii_data)
+        function [y_processed] = process_taps(self,radii_data)
         % Return modified y data (1 by 256), dissimilarity data and the minimum x point
         % for a single radius of data (intended to be a single radius).
 
             y_processed = [];
-            dissims = [];
+%             dissims = [];
 
             for tap_num = 1:length(radii_data) %TODO? is length safe, maybe use size(,)?
                 current_tap_data_norm = radii_data{1,tap_num}(: ,:  ,:)- radii_data{1,tap_num}(1 ,:  ,:);
@@ -280,14 +280,14 @@ classdef Experiment_NO_DISSIM < handle
 
                 average_max_i = round(mean([max_i(1,:)  max_i(2,:)],2)); % want to compare same frame across tap, not different frames for each pin
 
-                differences = self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,:) ...
-                              - current_tap_data_norm(average_max_i,:,:); 
+%                 differences = self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,:) ...
+%                               - current_tap_data_norm(average_max_i,:,:); 
 
                 y_processed = [y_processed;...
                               current_tap_data_norm(average_max_i,:,1) current_tap_data_norm(average_max_i,:,2)]; %#ok<AGROW>
 
-                diss = norm([differences(:,:,1)'; differences(:,:,2)']);
-                dissims =[dissims diss]; %#ok<AGROW>
+%                 diss = norm([differences(:,:,1)'; differences(:,:,2)']);
+%                 dissims =[dissims diss]; %#ok<AGROW>
             end
         end%good
         
