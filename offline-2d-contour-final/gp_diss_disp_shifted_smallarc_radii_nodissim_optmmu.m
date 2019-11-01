@@ -173,7 +173,7 @@ init_hyper_pars_2 = [1 300 5];
                                                           sigma_n_y,...
                                                           [y_train{training_index}(MIN_I_TRAIN:MAX_I_TRAIN,:)] ,...
                                                           [[x_real(MIN_I_TRAIN:MAX_I_TRAIN,training_index) + real_shift] ...
-                                                           [ones(21,1)*(training_angle_indexes(training_index)-10)/4.5]]),...
+                                                           [ones(21,1)]]),...
                             init_hyper_pars_2,...
                             optimoptions('fminunc','Display','off','MaxFunEvals',10000));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -202,6 +202,7 @@ l_mu = par(3)
 
 %% Optimise shift
 shifts =[];
+mu_error_trains=[];
 for line = 1:length(training_angle_indexes)
     
     y_gplvm_input_train = [y_gplvm_input_train;...
@@ -209,17 +210,16 @@ for line = 1:length(training_angle_indexes)
 
     
 
-    mu_gplvm_input_train = [mu_gplvm_input_train;...
-                                ones(21,1)*(training_angle_indexes(line)-10)/4.5]; 
+     
     %% %%%%%%%%%%%%% Training 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
-    init_hyper_pars_3 = [0];
+    init_hyper_pars_3 = [0 0];
 
     [par, fval, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f, ...
                                                               [l_disp l_mu], ...
                                                               sigma_n_y,...
                                                               [y_ref_taps; y_gplvm_input_train] ,...
                                                               [[disp_ref_taps; disp_gplvm_input_train; x_real(MIN_I_TRAIN:MAX_I_TRAIN,line)+real_shift+opt_pars(1)] ...
-                                                               [mu_ref_taps; mu_gplvm_input_train]]),...
+                                                               [mu_ref_taps; mu_gplvm_input_train; ones(21,1)*opt_pars(2)]]),...
                                 init_hyper_pars_3,...
                                 optimoptions('fminunc','Display','off','MaxFunEvals',10000));
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -240,12 +240,17 @@ for line = 1:length(training_angle_indexes)
     % l_mu = par(3)
     real_shift
     estimated_shift = par(1)
+    estiamted_mu = par(2)
+    mu_error_train= estiamted_mu - (training_angle_indexes(line)-10)/4.5
     % par(4)
     % par(5)
     
     disp_gplvm_input_train = [disp_gplvm_input_train;...    
                               x_real(MIN_I_TRAIN:MAX_I_TRAIN,line)+real_shift+estimated_shift];
+    mu_gplvm_input_train = [mu_gplvm_input_train;...
+                                ones(21,1)*estiamted_mu];
     shifts = [shifts; estimated_shift];
+    mu_error_trains = [mu_error_trains mu_error_train];
     
 end
 
@@ -401,6 +406,8 @@ xlabel("Expected \mu")
 grid on
 grid minor
 hold off
+
+mu_error_trains
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %--------------------------- FUNCTIONS ---------------------------------------%
