@@ -220,13 +220,6 @@ classdef Experiment_NO_DISSIM < handle
             
             %%%End of changes
             
-            %TODO error checking should probably check shift no greater
-            %than ... +-10mm? as dissim doesnt exist here
-            %error check, see if minima was actually in range (ie end points arent minima, but somewhere in middle)
-            [~,min_i] = min(dissims(n_useless_taps+1:end));
-            if  min_i== 1 || min_i == length(dissims(n_useless_taps+1:end))
-                warning("Minimum diss was at far end, actual minima probably not found, model may be bad")
-            end
             % location closest to 0 dissim is point for next extrapolation
             self.dissim_locations = [px py] - x_min*[cosd(self.current_rotation)...
                                                      sind(self.current_rotation)]; %TODO check sign of x_min %cat onto bottom, use dissim_locations(end,:) to get last point
