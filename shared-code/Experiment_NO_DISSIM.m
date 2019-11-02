@@ -195,7 +195,7 @@ classdef Experiment_NO_DISSIM < handle
             %%%%%%%%%%%%%%%%%%%%%%REPEATED CODE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             n_useless_taps = self.tap_number; %so can exlude points later on
             % tap along "radius" 
-            for disp_from_start = -10:10 
+            for disp_from_start = -10:4:10 
                 temp_point = [px py] + disp_from_start*[cosd(rotation_offset)...
                                                         sind(rotation_offset)];
                 self.move_and_tap([temp_point rotation_offset],current_step);%hereafter current_rotation == rotation_offset
@@ -204,13 +204,13 @@ classdef Experiment_NO_DISSIM < handle
             %%%Start of changes
             % calc dissim, align to 0 (edge)
             ys_for_real = self.process_taps(self.data{current_step});
-            xs_default = [-10:10]';
+            xs_default = [-10:4:10]';
             
             % init model hyper params using collected line data with defualt (false) shift
-            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_default ones(21,1)])
+            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_default ones(6,1)])
             
             % Add single ref tap as first data in model
-            model.add_data_to_model_direct(self, ys, xs) %TODO inpit ref tap, not ys xs
+            model.add_data_to_model_direct([self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,1) self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,2)], [0 1])
             
             %find shift using gplvm and single ref, previous lines and new line
             x_min  = model.radius_diss_shift(ys_for_real(n_useless_taps+1:end,:), xs_default);%remove first 3 y points as not in line
@@ -232,7 +232,7 @@ classdef Experiment_NO_DISSIM < handle
             disp("...finished bootstrap")
         end%one TODO
         
-        function [processed_tap] = process_single_tap(self,tap_data)
+        function [processed_tap, diss] = process_single_tap(self,tap_data)
         % Tap data should be (1:n_frames,1:127,1:2) dimensions
         % processed_tap is (1:254)
         % diss is (1:1)
@@ -257,9 +257,9 @@ classdef Experiment_NO_DISSIM < handle
             processed_tap = [current_tap_data_norm(average_max_i,:,1) current_tap_data_norm(average_max_i,:,2)];
 
             % dissimilarity measure 
-%             differences = self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,:) ...
-%                                   - current_tap_data_norm(average_max_i,:,:);
-%             diss = norm([differences(:,:,1)'; differences(:,:,2)']);
+            differences = self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,:) ...
+                                  - current_tap_data_norm(average_max_i,:,:);
+            diss = norm([differences(:,:,1)'; differences(:,:,2)']);
 
         end%good
         

@@ -28,7 +28,9 @@ end
 % set robot parameters
 Expt.actionTraj = [0 0 5 0 0 0; 0 0 0 0 0 0]; % tap move trajectory wrt tool/sensor frame
 Expt.robotSpeed = [25 15 15 10];%2*[50 30 15 10];
-Expt.workFrame = [326-5 -272 68-15-2 180 0 180];%[475 180 69 180 0 180]; % board 2 ABB1 % specify work frame wrt base frame (x,y,z,r,p,y) %find using abb jogger
+Expt.workFrame = [326 -272 68 180 0 180];%solid stimuli
+% Expt.workFrame = [326-5 -272 68-15-2 180 0 180];%banana
+%Expt.workFrame = [326-5 -272 68-15-2 180 0 180];%[475 180 69 180 0 180]; % board 2 ABB1 % specify work frame wrt base frame (x,y,z,r,p,y) %find using abb jogger
 % the workframe should be at the object edge with the greatest x component
 % as ref tap is taken here
 
@@ -58,7 +60,7 @@ fprintf(info_file,'\r\nCurrent git HEAD: %s' ,current_head);
 fprintf(info_file,'\r\nCurrent branch:\r\n %s', branches);
 fprintf(info_file, '\r\nExperiment Description:\r\n');
 fprintf(info_file, '-----------------------\r\n');
-fprintf(info_file, 'Robot code online: step5, collect data at-10:10,banana\r\n');
+fprintf(info_file, 'Robot code online: no dissim,flower\r\n');
 fclose(info_file);
 
 
@@ -200,7 +202,7 @@ for current_step = current_step+1:MAX_STEPS % (&& not returned to begining locat
         n_useless_taps = ex.tap_number; %so can exlude points later on
         
         % tap along edge
-        for disp_from_start = -10:10 
+        for disp_from_start = -10:4:10 
             temp_point = new_test_point + disp_from_start*[cosd(ex.current_rotation)...
                                                            sind(ex.current_rotation)];
             ex.move_and_tap([temp_point ex.current_rotation],current_step);
@@ -208,8 +210,8 @@ for current_step = current_step+1:MAX_STEPS % (&& not returned to begining locat
         
         % calc dissim, align to 0 (edge)
         [ys_for_real] = ex.process_taps(ex.data{current_step});
-        xs_default = [-10:10]';
-        x_min  = model.radius_diss_shift(ys_for_real(n_useless_taps+1:end), xs_default);
+        xs_default = [-10:4:10]';
+        x_min  = model.radius_diss_shift(ys_for_real(n_useless_taps+1:end,:), xs_default);
 
         xs_current_step = xs_default + x_min; % so all minima are aligned
         
