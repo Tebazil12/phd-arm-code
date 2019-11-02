@@ -9,6 +9,7 @@ classdef Experiment_NO_DISSIM < handle
         ref_diffs_norm_max_ind
         ref_diffs_norm
         dissim_locations
+        taps_disp_mu_preds=[];
     end
     properties (Constant)
       sigma_n_diss = 5;%0.5;%1.94;
@@ -35,83 +36,83 @@ classdef Experiment_NO_DISSIM < handle
             self.camera.stop
         end%good
         
-        function x_min  = radius_diss_shift(self,dissims, x_matrix)
-        % Return number that when added to the suggested x values, shifts the
-        % values so that the trough (minima) lines up with 0. Uses a gp to estimate
-        % smooth curve rather than using raw dissim values (gp may need tuning
-        % under different circs e.g. harder taps giving higher dissims).Plot raw
-        % and gp estimates for reference.
-
-            if size(x_matrix(:,1),1) ~= size(dissims',1)
-                x_matrix(:,1)
-                dissims' %#ok<NOPRT>
-                error("dissims and x_matrix are different lengths")
-            end
-            % Get gp for this specific radius
-            [par, ~, ~] = fminunc(@(mypar)gp_max_log_like(mypar(1), mypar(2), self.sigma_n_diss,...
-                                                                dissims' , x_matrix(:,1)),...
-                                        [10 1] ,optimoptions('fminunc','Display','off'));
-
-            sigma_f = par(1);
-            l = par(2);
-
-            % Get K matrix for this radius
-            k_cap = calc_k_cap(x_matrix(:,1), sigma_f,l, self.sigma_n_diss);
-
-            % Estimate position over length of radius
-            i = 1;
-            for x_star = -10:0.1:10
-        %         if sum(-20:10 == x_star) == 0
-                    x_stars(i) = x_star; %#ok<AGROW>
-
-                    % setup covariance matrix stuff
-                    k_star      = calc_k_star(x_star, x_matrix(:,1), sigma_f,l, self.sigma_n_diss);
-                    k_star_star = calc_covar_ij(x_star, x_star, sigma_f,l);
-
-                    % Estimate y
-                    y_star(i) = k_star * inv(k_cap) * dissims'; %#ok<MINV,AGROW>
-
-                    % Estimate variance
-                    var_y_star(i) = k_star_star - (k_star * inv(k_cap) * transpose(k_star)); %#ok<MINV,AGROW>
-                    if var_y_star(i) < 0.0000
-                        var_y_star(i) =0; %#ok<AGROW> % otherwise -0.0000 causes errors with sqrt()
-                    end
-
-                    i = i+1;
-        %         end
-            end
-
-            [~,x_min_ind] = min(y_star);
-            x_min = -x_stars(x_min_ind);
+%         function x_min  = radius_diss_shift(self,dissims, x_matrix)
+%         % Return number that when added to the suggested x values, shifts the
+%         % values so that the trough (minima) lines up with 0. Uses a gp to estimate
+%         % smooth curve rather than using raw dissim values (gp may need tuning
+%         % under different circs e.g. harder taps giving higher dissims).Plot raw
+%         % and gp estimates for reference.
 % 
-%             %% Plot input
-%             figure(2)
-%             subplot(1,2,1)
-%         %     clf
-%             hold on
-%             title("Original")
-%         %     fill([x_stars, fliplr(x_stars)],...
-%         %          [y_star+sqrt(var_y_star), fliplr(y_star-sqrt(var_y_star))],...
-%         %          [1 1 0.8])
+%             if size(x_matrix(:,1),1) ~= size(dissims',1)
+%                 x_matrix(:,1)
+%                 dissims' %#ok<NOPRT>
+%                 error("dissims and x_matrix are different lengths")
+%             end
+%             % Get gp for this specific radius
+%             [par, ~, ~] = fminunc(@(mypar)gp_max_log_like(mypar(1), mypar(2), self.sigma_n_diss,...
+%                                                                 dissims' , x_matrix(:,1)),...
+%                                         [10 1] ,optimoptions('fminunc','Display','off'));
 % 
-%             plot(x_matrix(:,1), dissims, '+')
-%             plot(x_matrix(:,1), dissims)
-%             plot(x_stars, y_star)
-%             axis([-10 10 0 90])
-%             hold off
+%             sigma_f = par(1);
+%             l = par(2);
 % 
-%             %% Plot output
-%             subplot(1,2,2)
-%             hold on
-%             title("Troughs aligned")
-%             plot(x_matrix(:,1)+x_min, dissims, '+')
-%             plot(x_stars+x_min, y_star)
-%             grid on
-%             grid minor
-%             axis([-10 10 0 90])
-%             hold off
-
-        end%good
+%             % Get K matrix for this radius
+%             k_cap = calc_k_cap(x_matrix(:,1), sigma_f,l, self.sigma_n_diss);
+% 
+%             % Estimate position over length of radius
+%             i = 1;
+%             for x_star = -10:0.1:10
+%         %         if sum(-20:10 == x_star) == 0
+%                     x_stars(i) = x_star; %#ok<AGROW>
+% 
+%                     % setup covariance matrix stuff
+%                     k_star      = calc_k_star(x_star, x_matrix(:,1), sigma_f,l, self.sigma_n_diss);
+%                     k_star_star = calc_covar_ij(x_star, x_star, sigma_f,l);
+% 
+%                     % Estimate y
+%                     y_star(i) = k_star * inv(k_cap) * dissims'; %#ok<MINV,AGROW>
+% 
+%                     % Estimate variance
+%                     var_y_star(i) = k_star_star - (k_star * inv(k_cap) * transpose(k_star)); %#ok<MINV,AGROW>
+%                     if var_y_star(i) < 0.0000
+%                         var_y_star(i) =0; %#ok<AGROW> % otherwise -0.0000 causes errors with sqrt()
+%                     end
+% 
+%                     i = i+1;
+%         %         end
+%             end
+% 
+%             [~,x_min_ind] = min(y_star);
+%             x_min = -x_stars(x_min_ind);
+% % 
+% %             %% Plot input
+% %             figure(2)
+% %             subplot(1,2,1)
+% %         %     clf
+% %             hold on
+% %             title("Original")
+% %         %     fill([x_stars, fliplr(x_stars)],...
+% %         %          [y_star+sqrt(var_y_star), fliplr(y_star-sqrt(var_y_star))],...
+% %         %          [1 1 0.8])
+% % 
+% %             plot(x_matrix(:,1), dissims, '+')
+% %             plot(x_matrix(:,1), dissims)
+% %             plot(x_stars, y_star)
+% %             axis([-10 10 0 90])
+% %             hold off
+% % 
+% %             %% Plot output
+% %             subplot(1,2,2)
+% %             hold on
+% %             title("Troughs aligned")
+% %             plot(x_matrix(:,1)+x_min, dissims, '+')
+% %             plot(x_stars+x_min, y_star)
+% %             grid on
+% %             grid minor
+% %             axis([-10 10 0 90])
+% %             hold off
+% 
+%         end%good
         
         function move_to_location(self,location)
         % Move to location, location = [x y theta] . x and y are in mm, theta is in
@@ -168,7 +169,7 @@ classdef Experiment_NO_DISSIM < handle
             disp("Starting bootstrap...")
         
             current_step = 1; % bootstrap is always the first set of collected data
-            model = GPLVM;
+            model = GPLVM_NO_DISSIM;
 
             self.current_rotation = 0;% clockwise = -ve, anti-clock= +ve
             
@@ -231,7 +232,7 @@ classdef Experiment_NO_DISSIM < handle
             disp("...finished bootstrap")
         end%one TODO
         
-        function [processed_tap, diss] = process_single_tap(self,tap_data)
+        function [processed_tap] = process_single_tap(self,tap_data)
         % Tap data should be (1:n_frames,1:127,1:2) dimensions
         % processed_tap is (1:254)
         % diss is (1:1)
@@ -256,9 +257,9 @@ classdef Experiment_NO_DISSIM < handle
             processed_tap = [current_tap_data_norm(average_max_i,:,1) current_tap_data_norm(average_max_i,:,2)];
 
             % dissimilarity measure 
-            differences = self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,:) ...
-                                  - current_tap_data_norm(average_max_i,:,:);
-            diss = norm([differences(:,:,1)'; differences(:,:,2)']);
+%             differences = self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,:) ...
+%                                   - current_tap_data_norm(average_max_i,:,:);
+%             diss = norm([differences(:,:,1)'; differences(:,:,2)']);
 
         end%good
         

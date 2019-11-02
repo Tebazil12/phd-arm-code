@@ -2,7 +2,7 @@
 
 killPython; close all; clear all; clear classes; clear figures; clc; %#ok<CLCLS,CLALL> % dbstop if error
     
-ex = Experiment; % Experiment instance for this experiment
+ex = Experiment_NO_DISSIM; % Experiment instance for this experiment
 ex.init();
 
 ONLINE = true;% on/offline
@@ -167,7 +167,8 @@ for current_step = current_step+1:MAX_STEPS % (&& not returned to begining locat
     end
     
     %% predict distance to edge from this tap using gplvm
-    new_x = model.predict_singletap(new_tap);
+    [new_x, new_mu] = model.predict_singletap(new_tap);
+    ex.taps_disp_mu_preds = [ex.taps_disp_mu_preds; [new_x new_mu]];
     disp_to_edge = -new_x;
     disp(strcat("Predicted disp. is: ", mat2str(new_x)))
     
@@ -185,7 +186,8 @@ for current_step = current_step+1:MAX_STEPS % (&& not returned to begining locat
         end
 
         % predict distance to edge from this tap using gplvm
-        new_x2 = model.predict_singletap(new_tap2);
+        [new_x2, new_mu2] = model.predict_singletap(new_tap2);
+        ex.taps_disp_mu_preds = [ex.taps_disp_mu_preds; [new_x2 new_mu2]];
         disp_to_edge = -new_x2; %NB this overwrites previous tap var
         disp(strcat("Predicted disp. is: ", mat2str(new_x2)))
     %else
@@ -205,17 +207,17 @@ for current_step = current_step+1:MAX_STEPS % (&& not returned to begining locat
         end
         
         % calc dissim, align to 0 (edge)
-        [dissims, ys_for_real] = ex.process_taps(ex.data{current_step});
+        [ys_for_real] = ex.process_taps(ex.data{current_step});
         xs_default = [-10:10]';
-        x_min  = ex.radius_diss_shift(dissims(n_useless_taps+1:end), xs_default);
+        x_min  = model.radius_diss_shift(ys_for_real(n_useless_taps+1:end), xs_default);
 
         xs_current_step = xs_default + x_min; % so all minima are aligned
         
-        %error check, see if minima was actually in range (ie end points arent minima, but somewhere in middle)
-        [~,min_i] = min(dissims(n_useless_taps+1:end));
-        if  min_i== 1 || min_i == length(dissims(n_useless_taps+1:end))
-            warning("Minimum diss was at far end, actual minima probably not found, model may be bad")
-        end
+%         %error check, see if minima was actually in range (ie end points arent minima, but somewhere in middle)
+%         [~,min_i] = min(dissims(n_useless_taps+1:end));
+%         if  min_i== 1 || min_i == length(dissims(n_useless_taps+1:end))
+%             warning("Minimum diss was at far end, actual minima probably not found, model may be bad")
+%         end
         
         new_dissim_loc = new_test_point - x_min*[cosd(ex.current_rotation)...
                                                  sind(ex.current_rotation)];
