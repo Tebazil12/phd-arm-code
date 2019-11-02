@@ -63,8 +63,8 @@ classdef GPLVM_NO_DISSIM < handle
             self.l_disp = par(2);
             self.l_mu = par(3);
             
-            self.y_gplvm_input_train = y_input;
-            self.x_gplvm_input_train = x_input;
+%             self.y_gplvm_input_train = y_input;
+%             self.x_gplvm_input_train = x_input;
         end%good (just niceties to add)
         
         function [pred_x, pred_mu] = predict_singletap(self, pred_tap)
@@ -114,6 +114,105 @@ classdef GPLVM_NO_DISSIM < handle
                                         xs_current_step ones(size(xs_current_step))*new_mu];
         end
         
+        function add_data_to_model_direct(self, ys, xs)
+        % note, currently REPLACES all model data with ys and xs, it does
+        % not CAT ys and xs
+            self.y_gplvm_input_train = ys;
+            self.x_gplvm_input_train = xs;            
+        end
+        
+        function estimated_shift  = radius_diss_shift(self, ys_line, xs_line)
+        % Predicts shift of data using gplvm, copying
+        % code from ...optmmu_sep.m. Replaces funciton that was in Experiment
+        
+            disp("Getting line shift")
+            
+            
+            %%%
+                
+            init_latent_vars = 0;
+            %% %%%%%%%%%%%%% Training Shift %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
+            
+            [par, ~, flag] = fminunc(@(opt_pars)gplvm_max_log_like(self.sigma_f,...
+                                                                   [self.l_disp self.l_mu],...
+                                                                   self.sigma_n_y,...
+                                                                   [self.y_gplvm_input_train; ys_line],...
+                                                                   [self.x_gplvm_input_train; xs_line+opt_pars(1) ones(size(xs_line))]),...
+                                        init_latent_vars,...
+                                        optimoptions('fminunc','Display','off','MaxFunEvals',10000));
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            flag
+            if flag < 1
+                warning("fminsearch was not happy")
+                flag
+            end 
+            
+            estimated_shift = par(1)
+            
+            if abs(estimated_shift) > 10
+                estimated_shift
+                warning('Estimated shift of line is greater than +-10mm')
+            elseif abs(estimated_shift) == 10
+                warning('Shift indicates edge is at far end of line, therefore may be inaccurate')
+            end
+
+%             %% %%%%%%%%%%%%% Training 3 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
+%             init_hyper_pars_3 = [0];
+% 
+%             [par, ~, flag] = fminunc(@(opt_pars)gplvm_max_log_like(sigma_f, ...
+%                                                                       [l_disp l_mu], ...
+%                                                                       sigma_n_y,...
+%                                                                       [y_ref_taps; y_gplvm_input_train] ,...
+%                                                                       [[disp_ref_taps; disp_gplvm_input_train; x_real(MIN_I_TRAIN:MAX_I_TRAIN,line)+real_shift+estimated_shift] ...
+%                                                                        [mu_ref_taps; mu_gplvm_input_train; ones(21,1)*opt_pars(1)]]),...
+%                                         init_hyper_pars_3,...
+%                                         optimoptions('fminunc','Display','off','MaxFunEvals',10000));
+%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             flag
+%             if flag < 1
+%                 warning("fminsearch was not happy")
+%                 flag
+%             end 
+% 
+%             par
+% 
+%             estiamted_mu = par(1)
+%             mu_error_train= estiamted_mu - (training_angle_indexes(line)-10)/4.5
+%             % par(4)
+%             % par(5)
+% 
+%             disp_gplvm_input_train = [disp_gplvm_input_train;...    
+%                                       x_real(MIN_I_TRAIN:MAX_I_TRAIN,line)+real_shift+estimated_shift];
+%             mu_gplvm_input_train = [mu_gplvm_input_train;...
+%                                         ones(21,1)*estiamted_mu];
+% 
+%             shifts = [shifts; estimated_shift];
+%             mu_error_trains = [mu_error_trains mu_error_train];
+%             
+            %%%
+%             init_latent_vars = 0;
+%             %%%%%%%%%%%%%% Radius Testing %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             %note, mu for ref tap and line should be same to maximise disp
+%             %alignement
+%             [par, ~, flag] = fminunc(@(opt_pars)gplvm_max_log_like(self.sigma_f,...
+%                                                                    [self.l_disp self.l_mu],...
+%                                                                    self.sigma_n_y,...
+%                                                                    [self.y_gplvm_input_train; ys_for_real],...
+%                                                                    [self.x_gplvm_input_train; xs_current_step+opt_pars(1) ones(size(xs_current_step))]),...
+%                                         init_latent_vars,...
+%                                         optimoptions('fminunc','Display','off'));
+%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             if flag < 1
+%                 flag %#ok<NOPRT>
+%             end 
+% 
+%             new_mu = par; %TODO add error checking on mu, like if mu is really far from rest of graph, reorder graph or something?
+%             
+%             self.y_gplvm_input_train = [self.y_gplvm_input_train;...
+%                                         ys_for_real];
+%             self.x_gplvm_input_train = [self.x_gplvm_input_train;...
+%                                         xs_current_step ones(size(xs_current_step))*new_mu];
+        end
     end
     
 end

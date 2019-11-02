@@ -199,13 +199,26 @@ classdef Experiment_NO_DISSIM < handle
                                                         sind(rotation_offset)];
                 self.move_and_tap([temp_point rotation_offset],current_step);%hereafter current_rotation == rotation_offset
             end
-
+            
+            %%%Start of changes
             % calc dissim, align to 0 (edge)
             ys_for_real = self.process_taps(self.data{current_step});
             xs_default = [-10:10]';
-            x_min  = self.radius_diss_shift(dissims(n_useless_taps+1:end), xs_default);%remove first 3 points as not in line
-
+            
+            % init model hyper params using collected line data with defualt (false) shift
+            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_default ones(21,1)])
+            
+            % Add single ref tap as first data in model
+            model.add_data_to_model_direct(self, ys, xs) %TODO inpit ref tap, not ys xs
+            
+            %find shift using gplvm and single ref, previous lines and new line
+            x_min  = model.radius_diss_shift(ys_for_real(n_useless_taps+1:end,:), xs_default);%remove first 3 y points as not in line
             xs_current_step = xs_default + x_min; % so all minima are aligned
+            
+            %add data to model by optimising mu for line
+            model.add_a_radius(ys_for_real(n_useless_taps+1:end,:), xs_current_step)
+            
+            %%%End of changes
             
             %TODO error checking should probably check shift no greater
             %than ... +-10mm? as dissim doesnt exist here
@@ -218,9 +231,8 @@ classdef Experiment_NO_DISSIM < handle
             self.dissim_locations = [px py] - x_min*[cosd(self.current_rotation)...
                                                      sind(self.current_rotation)]; %TODO check sign of x_min %cat onto bottom, use dissim_locations(end,:) to get last point
 
-
-            % init model hyper params using collected line data
-            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_current_step ones(21,1)])
+            
+            
             %%%%%%%%%%%%%%%%%%%%%%REPEATED CODE END%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             disp("...finished bootstrap")
