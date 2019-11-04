@@ -195,7 +195,7 @@ classdef Experiment_NO_DISSIM < handle
             %%%%%%%%%%%%%%%%%%%%%%REPEATED CODE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             n_useless_taps = self.tap_number; %so can exlude points later on
             % tap along "radius" 
-            for disp_from_start = -10:4:10 
+            for disp_from_start = -10:5:10 
                 temp_point = [px py] + disp_from_start*[cosd(rotation_offset)...
                                                         sind(rotation_offset)];
                 self.move_and_tap([temp_point rotation_offset],current_step);%hereafter current_rotation == rotation_offset
@@ -204,10 +204,10 @@ classdef Experiment_NO_DISSIM < handle
             %%%Start of changes
             % calc dissim, align to 0 (edge)
             ys_for_real = self.process_taps(self.data{current_step});
-            xs_default = [-10:4:10]';
+            xs_default = [-10:5:10]';
             
             % init model hyper params using collected line data with defualt (false) shift
-            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_default ones(6,1)])
+            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_default ones(length(xs_default),1)])
             
             % Add single ref tap as first data in model
             model.add_data_to_model_direct([self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,1) self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,2)], [0 1])
