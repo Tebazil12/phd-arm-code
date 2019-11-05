@@ -30,8 +30,8 @@ Expt.actionTraj = [0 0 5 0 0 0; 0 0 0 0 0 0]; % tap move trajectory wrt tool/sen
 Expt.robotSpeed = [25 15 15 10];%2*[50 30 15 10];
 % Expt.workFrame = [326 -272 68 180 0 180];%solid stimuli
 % Expt.workFrame = [324 -272 68 180 0 180];%flower
-Expt.workFrame = [326-5 -272 68-15-2 180 0 180];%banana
-% Expt.workFrame = [326-5-4 -272-4 68-15-2 180 0 180];%banana-more on
+% Expt.workFrame = [326-5 -272 68-15-2 180 0 180];%banana
+Expt.workFrame = [326-5-4 -272-4 68-15-2 180 0 180];%banana-more on
 % Expt.workFrame = [350 -295 68 180 0 180];%brick
 %Expt.workFrame = [326-5 -272 68-15-2 180 0 180];%[475 180 69 180 0 180]; % board 2 ABB1 % specify work frame wrt base frame (x,y,z,r,p,y) %find using abb jogger
 % the workframe should be at the object edge with the greatest x component
@@ -63,7 +63,7 @@ fprintf(info_file,'\r\nCurrent git HEAD: %s' ,current_head);
 fprintf(info_file,'\r\nCurrent branch:\r\n %s', branches);
 fprintf(info_file, '\r\nExperiment Description:\r\n');
 fprintf(info_file, '-----------------------\r\n');
-fprintf(info_file, 'Robot code online: no dissim,banana,5pts,limits added,step size = 3mm. Stopping removed, 160 taps max\r\n');
+fprintf(info_file, 'Robot code online: no dissim,banana (moreon),5pts,limits added,step size = 2mm. Stopping removed, 3 rounds (ish)\r\n');
 fclose(info_file);
 
 
@@ -130,10 +130,11 @@ ex.ref_diffs_norm_max_ind = round(mean([an_index(:,:,1) an_index(:,:,2)]));
 
 %% Main loop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MAX_STEPS = 160;
-STEP_LENGTH = 3;%mm, 
+MAX_STEPS = 300;
+STEP_LENGTH = 2;%mm, 
 TOL = 2; % mm, tolerance of on edge/not on edge
 MAX_DISP =15;%mm, largest step can take on a predicted distance
+completed_n = 0;
 
 for current_step = current_step+1:MAX_STEPS % (&& not returned to begining location - checked at end of while loop)
     disp(strcat("*********Main loop: ", mat2str(current_step)))
@@ -278,10 +279,17 @@ for current_step = current_step+1:MAX_STEPS % (&& not returned to begining locat
     save(fullfile(dirPath,dirTrain,mat2str(current_step)), 'ex') %TODO is this too much info in one file? loading might overwrite lots of vars...
     
     % back at start location?, break if so (only check after 2nd point)
-%     if pdist2(ex.dissim_locations(1,:), ex.dissim_locations(end,:)) < STEP_LENGTH && current_step > 2
-%         disp("Distance to start point is less than step length, breaking loop")
-%         break
-%     end
+    if pdist2(ex.dissim_locations(1,:), ex.dissim_locations(end,:)) < STEP_LENGTH && current_step > 2
+        disp("Distance to start point is less than step length")
+%         if current_step > 
+%         completed_step = current_step;
+        completed_n = completed_n +1
+        
+        if completed_n >= 2+3
+            disp("breaking loop")
+            break
+        end
+    end
 end %main loop
 
 disp("Main done, saving and closing")
