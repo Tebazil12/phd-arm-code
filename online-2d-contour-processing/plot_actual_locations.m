@@ -17,11 +17,11 @@
 % load('/home/lizzie/git/masters-tactile/data/robotcode_first_adapt2019-02-14_1427/all_data.mat') %circle step15
 % load('/home/lizzie/git/masters-tactile/data/robotcode_first_adapt2019-02-14_1443/all_data.mat') %circle step20
 
-higher_path = '/home/lizzie/OneDrive/data/';
-file_name = '/all_data.mat';
+% higher_path = '/home/lizzie/OneDrive/data/';
+% file_name = '/all_data.mat';
 
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-02_1950'; shape = "circle";%NODISS circle
-current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-02_2002'; shape = "circle";%NODISS circle
+% current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-02_2002'; shape = "circle";%NODISS circle
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-02_2029'; shape = "banana";%NODISS banana
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-02_2039'; shape = "flower"; %NODISS flower
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-02_2051'; shape = "flower"; %NODISS flower 6pt
@@ -59,15 +59,49 @@ current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-02_2002'; shape = "cir
 
 
 
-full_path = strcat(higher_path, current_folder, file_name);
-load(full_path)
+% full_path = strcat(higher_path, current_folder, file_name);
+% load(full_path)
 
 % figure(2)
-close all
-the_figure = figure('position', [0, 0, 500, 500],'DefaultAxesFontSize',16);
+% close all
+% the_figure = figure('position', [0, 0, 500, 500],'DefaultAxesFontSize',16);
+% hold on
+% set(0,'defaultAxesFontName', 'arial')
+% set(0,'defaultTextFontName', 'arial')
 hold on
-set(0,'defaultAxesFontName', 'arial')
-set(0,'defaultTextFontName', 'arial')
+if shape == "flower"
+    %for flower
+    axis([-135 25 -80 80])
+    xticks(-120:20:20)
+    
+elseif shape == "circle"
+
+    % %for circle
+    axis([-125 15 -70 70])
+    xticks(-120:20:20)
+    
+elseif shape == "banana"    
+
+    %for banana
+    axis([-55 45 -70 65]) % 100 x 135
+    xticks(-120:20:60)
+    
+    % BACKGROUND IMAGES
+    I = imread('/home/lizzie/OneDrive/pics/banana3-2.png'); 
+    h = image(xlim,ylim,flipdim(I, 1)); 
+    uistack(h,'bottom')
+
+elseif shape == "brick"
+    %for brick
+    axis([-80 15 -60 60]) %95 x 120
+    xticks(-120:20:20)
+    
+    % BACKGROUND IMAGES
+    I = imread('/home/lizzie/OneDrive/pics/brick3.png'); 
+    h = image(xlim,ylim,flipdim(I, 1)); 
+    uistack(h,'bottom')
+    
+end
 
 if shape == "circle"
     r = 53;
@@ -143,45 +177,13 @@ pd = plot(ex.dissim_locations(:,1),ex.dissim_locations(:,2),'k-','LineWidth',2,'
 pf=plot(xs,ys,'Color',[0 0.7 1],'LineWidth',1);
 pg=plot(xs,ys,'+','Color',[1 0 0],'LineWidth',1.25);
 
-xlabel("x displacement (mm)",'FontSize',16)
-ylabel("y displacement (mm)",'FontSize',16)
+xlabel("x displacement (mm)")%,'FontSize',16)
+ylabel("y displacement (mm)")%,'FontSize',16)
 % title({"Square"},'FontSize',11)
 
 % legend([pg pf pd],{'Tap location','Robot Motion','Predicted Edge'},'FontSize',8,'location','best')
 
-if shape == "flower"
-    %for flower
-    axis([-135 25 -80 80])
-    xticks(-120:20:20)
-    
-elseif shape == "circle"
 
-    % %for circle
-    axis([-125 15 -70 70])
-    xticks(-120:20:20)
-    
-elseif shape == "banana"    
-
-    %for banana
-    axis([-55 45 -70 65]) % 100 x 135
-    xticks(-120:20:60)
-    
-    % BACKGROUND IMAGES
-    I = imread('/home/lizzie/OneDrive/pics/banana3-2.png'); 
-    h = image(xlim,ylim,flipdim(I, 1)); 
-    uistack(h,'bottom')
-
-elseif shape == "brick"
-    %for brick
-    axis([-80 15 -60 60]) %95 x 120
-    xticks(-120:20:20)
-    
-    % BACKGROUND IMAGES
-    I = imread('/home/lizzie/OneDrive/pics/brick3.png'); 
-    h = image(xlim,ylim,flipdim(I, 1)); 
-    uistack(h,'bottom')
-    
-end
 
 % grid on
 % plot([0 0],[-80 80],'Color',[0.7 0.7 0.7])
@@ -208,6 +210,6 @@ daspect([1 1 1])
 %odd items:
 
 % box on
-
-print('-dpng', ['/home/lizzie/OneDrive/matlab-figs/', current_folder,'.png']);
-savefig(['/home/lizzie/OneDrive/matlab-figs/', current_folder,'.fig']);
+% 
+% print('-dpng', ['/home/lizzie/OneDrive/matlab-figs/', current_folder,'.png']);
+% savefig(['/home/lizzie/OneDrive/matlab-figs/', current_folder,'.fig']);
