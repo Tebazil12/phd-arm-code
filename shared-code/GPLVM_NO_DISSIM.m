@@ -155,6 +155,14 @@ classdef GPLVM_NO_DISSIM < handle
             elseif abs(estimated_shift) == 10
                 warning('Shift indicates edge is at far end of line, therefore may be inaccurate')
             end
+            
+            if estimated_shift > 20
+                estimated_shift = 20;
+                warning('Shift too large, setting to 20mm')
+            elseif estimated_shift < -20
+                estimated_shift = -20;
+                warning('Shift too (negatively) large, setting to -20mm')
+            end
 
 %             %% %%%%%%%%%%%%% Training 3 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
 %             init_hyper_pars_3 = [0];
