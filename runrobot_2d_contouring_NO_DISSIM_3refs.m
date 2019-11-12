@@ -2,7 +2,7 @@
 
 killPython; close all; clear all; clear classes; clear figures; clc; %#ok<CLCLS,CLALL> % dbstop if error
     
-ex = Experiment_NO_DISSIM; % Experiment instance for this experiment
+ex = Experiment_NO_DISSIM_3refs; % Experiment instance for this experiment
 ex.init();
 
 ONLINE = true;% on/offline
@@ -104,14 +104,22 @@ tactile = TactileData(Expt);
 %% collect reference tap
 COLLECT_NEW_REFTAP = true;
 
-% Define/load reference tap
+% Define/load reference taps (3 taps, at -1, 0, 1mm at indexes 1,2,3 )
 if COLLECT_NEW_REFTAP
     %location of edge
+    ex.robot.move([-1 0 0 0 0 0])
+    tacData = ex.robot.recordAction; 
+    ref_tap{1} = tacData;
+    
     ex.robot.move([0 0 0 0 0 0])
     tacData = ex.robot.recordAction; 
-    ref_tap = tacData;
+    ref_tap{2} = tacData;
     
-    % save point in file for future use
+    ex.robot.move([1 0 0 0 0 0])
+    tacData = ex.robot.recordAction; 
+    ref_tap{3} = tacData;
+    
+    % save points in file for future use
     save(fullfile(dirPath,dirTrain,"ref_tap"), 'ref_tap')
 else
     load('/home/lizzie/git/masters-tactile/blah.mat') %TODO file structure, where file should go & windows v linux
@@ -119,11 +127,19 @@ else
 end
 
 % Normalize data, so get distance moved not just relative position
-ex.ref_diffs_norm = ref_tap(: ,:  ,:) - ref_tap(1 ,:  ,:); %normalized, assumes starts on no contact/all start in same position
+ex.ref_diffs_norm{1} = ref_tap{1}(: ,:  ,:) - ref_tap{1}(1 ,:  ,:); %normalized, assumes starts on no contact/all start in same position
+ex.ref_diffs_norm{2} = ref_tap{2}(: ,:  ,:) - ref_tap{2}(1 ,:  ,:); %normalized, assumes starts on no contact/all start in same position
+ex.ref_diffs_norm{3} = ref_tap{3}(: ,:  ,:) - ref_tap{3}(1 ,:  ,:); %normalized, assumes starts on no contact/all start in same position
 
 % find the frame in ref_diffs_norm with greatest diffs
-[~,an_index] = max(abs(ex.ref_diffs_norm));
-ex.ref_diffs_norm_max_ind = round(mean([an_index(:,:,1) an_index(:,:,2)]));
+[~,an_index{1}] = max(abs(ex.ref_diffs_norm{1}));
+ex.ref_diffs_norm_max_ind{1} = round(mean([an_index{1}(:,:,1) an_index{1}(:,:,2)]));
+
+[~,an_index{2}] = max(abs(ex.ref_diffs_norm{2}));
+ex.ref_diffs_norm_max_ind{2} = round(mean([an_index{2}(:,:,1) an_index{2}(:,:,2)]));
+
+[~,an_index{3}] = max(abs(ex.ref_diffs_norm{3}));
+ex.ref_diffs_norm_max_ind{3} = round(mean([an_index{3}(:,:,1) an_index{3}(:,:,2)]));
 
 %% Bootstrap 
 [model, current_step] = ex.bootstrap();
@@ -168,7 +184,7 @@ for current_step = current_step+1:MAX_STEPS % (&& not returned to begining locat
     ex.move_and_tap([new_test_point new_theta],current_step); %hereafter, ex.current_rotation == current_theta
     new_tap = ex.process_single_tap(ex.data{current_step}{ex.tap_number});
     
-    if ~isequal(size(new_tap), [1 size(ref_tap,2)*2])
+    if ~isequal(size(new_tap), [1 size(ref_tap{1},2)*2])
         warning("New tap is not the same dimensions as reference tap")
     end
     
@@ -187,7 +203,7 @@ for current_step = current_step+1:MAX_STEPS % (&& not returned to begining locat
         ex.move_and_tap([new_test_point2 ex.current_rotation],current_step);
         new_tap2 = ex.process_single_tap(ex.data{current_step}{ex.tap_number});
 
-        if ~isequal(size(new_tap2), [1 size(ref_tap,2)*2])
+        if ~isequal(size(new_tap2), [1 size(ref_tap{1},2)*2])
             warning("New tap2 is not the same dimensions as reference tap")
         end
 

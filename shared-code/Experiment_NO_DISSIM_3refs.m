@@ -1,4 +1,4 @@
-classdef Experiment_NO_DISSIM < handle
+classdef Experiment_NO_DISSIM_3refs < handle
     properties
         data
         actual_locations
@@ -210,7 +210,11 @@ classdef Experiment_NO_DISSIM < handle
             model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_default ones(length(xs_default),1)])
             
             % Add single ref tap as first data in model
-            model.add_data_to_model_direct([self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,1) self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,2)], [0 1])
+            ref_ys = [self.ref_diffs_norm{1}(self.ref_diffs_norm_max_ind{1} ,:  ,1) self.ref_diffs_norm{1}(self.ref_diffs_norm_max_ind{1} ,:  ,2);...
+                      self.ref_diffs_norm{2}(self.ref_diffs_norm_max_ind{2} ,:  ,1) self.ref_diffs_norm{2}(self.ref_diffs_norm_max_ind{2} ,:  ,2);...
+                      self.ref_diffs_norm{3}(self.ref_diffs_norm_max_ind{3} ,:  ,1) self.ref_diffs_norm{3}(self.ref_diffs_norm_max_ind{3} ,:  ,2)];
+            refs_xs = [-1 1; 0 1; 1 1];
+            model.add_data_to_model_direct(ref_ys, refs_xs)
             
             %find shift using gplvm and single ref, previous lines and new line
             x_min  = model.radius_diss_shift(ys_for_real(n_useless_taps+1:end,:), xs_default);%remove first 3 y points as not in line
@@ -257,7 +261,7 @@ classdef Experiment_NO_DISSIM < handle
             processed_tap = [current_tap_data_norm(average_max_i,:,1) current_tap_data_norm(average_max_i,:,2)];
 
             % dissimilarity measure 
-            differences = self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,:) ...
+            differences = self.ref_diffs_norm{2}(self.ref_diffs_norm_max_ind{2} ,:  ,:) ...
                                   - current_tap_data_norm(average_max_i,:,:);
             diss = norm([differences(:,:,1)'; differences(:,:,2)']);
 
