@@ -98,7 +98,7 @@ end
 sigma_n_y = 1.14;%1.94;
 sigma_n_diss = 5;%0.5;%1.94;
 
-training_angle_indexes = [10 15 19 5 1];
+training_angle_indexes = [5 19 1 15 10];
 for num_training = 1:length(training_angle_indexes)
     
     [dissims{num_training},...

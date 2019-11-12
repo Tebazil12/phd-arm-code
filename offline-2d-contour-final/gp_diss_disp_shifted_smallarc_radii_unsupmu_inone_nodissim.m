@@ -81,9 +81,9 @@ x_real_test = [-10:1:10]';
 dissims =[];
 
 %% Define reference tap & stuff
-reference_disp_indexes = [10 11 12];
+reference_disp_indexes = [11]% 11 12];
 for i = 1:length(reference_disp_indexes)
-    ref_tap{i} = all_data{10}{reference_disp_indexes(i)};%(:,:,:); 
+    ref_tap{i} = all_data{19}{reference_disp_indexes(i)};%(:,:,:); 
 
     % Normalize data, so get distance moved not just relative position
     ref_diffs_norm{i} = ref_tap{i}(: ,:  ,:) - ref_tap{i}(1 ,:  ,:); %normalized, assumes starts on no contact/all start in same position
@@ -153,9 +153,9 @@ mu_gplvm_input_train=[];
 real_shift = -3;
 disp_gplvm_input_train = disp_gplvm_input_train + real_shift;
 
-y_ref_taps = [processed_ref_tap{1}(:,:,1) processed_ref_tap{1}(:,:,2);...
-              processed_ref_tap{2}(:,:,1) processed_ref_tap{2}(:,:,2);...
-              processed_ref_tap{3}(:,:,1) processed_ref_tap{3}(:,:,2)];
+y_ref_taps = [processed_ref_tap{1}(:,:,1) processed_ref_tap{1}(:,:,2)];%...
+%               processed_ref_tap{2}(:,:,1) processed_ref_tap{2}(:,:,2);...
+%               processed_ref_tap{3}(:,:,1) processed_ref_tap{3}(:,:,2)];
           
 disp_ref_taps = [reference_disp_indexes-11]';
 
@@ -389,7 +389,9 @@ title("Train & Test Offline \mu Error - 5 Input Lines")
 
 expected_mu = -2:4/18:2;
 bar(expected_mu,new_mu(:,1,1)'-expected_mu)
-mean(abs(new_mu(:,1,1)'-expected_mu))
+mean_mu_error = mean(abs(new_mu(:,1,1)'-expected_mu))
+shifts'+real_shift
+mean_disp_error = mean(abs(shifts'+real_shift))
 plot(total_x_gplvm_input_train(:,2),total_x_gplvm_input_train(:,2)-total_x_gplvm_input_train(:,2),'ok','MarkerFaceColor','r')
 % axis([-2.2 2.2 -0.171 0.33 ])
 axis([-2.2 2.2 -2 2])
