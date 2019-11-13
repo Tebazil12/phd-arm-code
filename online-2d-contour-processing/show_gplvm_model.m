@@ -67,11 +67,13 @@
 % clf
 dissims=[];
 ref = [ex.ref_diffs_norm(ex.ref_diffs_norm_max_ind ,:  ,1) ex.ref_diffs_norm(ex.ref_diffs_norm_max_ind ,:  ,2)];
+% ref = [ex.ref_diffs_norm{2}(ex.ref_diffs_norm_max_ind{2} ,:  ,1) ex.ref_diffs_norm{2}(ex.ref_diffs_norm_max_ind{2} ,:  ,2)];
 
+n_ref_taps = 1;
 
 n_lines = size(model.y_gplvm_input_train,1)/n_taps_per_line;%5;
 
-for i = 2:size(model.y_gplvm_input_train,1)
+for i = n_ref_taps+1:size(model.y_gplvm_input_train,1)
     
     differences = ref - model.y_gplvm_input_train(i,:); 
 
@@ -88,9 +90,9 @@ mins=[]
 for i = 1:n_lines
     1+(i-1)*21
     i*21
-    x = model.x_gplvm_input_train(2+(i-1)*n_taps_per_line:i*n_taps_per_line,1);
-    y = model.x_gplvm_input_train(2+(i-1)*n_taps_per_line:i*n_taps_per_line,2);
-    z = dissims(2+(i-1)*n_taps_per_line:i*n_taps_per_line);
+    x = model.x_gplvm_input_train(1+n_ref_taps+(i-1)*n_taps_per_line:i*n_taps_per_line+n_ref_taps,1);
+    y = model.x_gplvm_input_train(1+n_ref_taps+(i-1)*n_taps_per_line:i*n_taps_per_line+n_ref_taps,2);
+    z = dissims(1+(i-1)*n_taps_per_line:i*n_taps_per_line);
     plot3( x,y,z,'color',[i/n_lines 0 1-(i/n_lines)])
     text(0, y(1) ,min(z)-2, num2str(i) )
     [raw_min_dissim(i), loc(i)] = min(z);

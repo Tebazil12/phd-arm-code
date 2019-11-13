@@ -21,7 +21,7 @@ file_name = '/all_data.mat';
 % current_folder = 'robotcode_first_adapt2019-02-15_1357'; shape = "circle"; n_taps_per_line = 21; %circle step5
 % current_folder = 'robotcode_first_adapt2019-02-14_1110'; shape = "circle"; n_taps_per_line = 21; %circle step10
 % current_folder = 'robotcode_first_adapt2019-02-14_1427'; shape = "circle"; n_taps_per_line = 21; %circle step15
-current_folder = 'robotcode_first_adapt2019-02-14_1443'; shape = "circle"; n_taps_per_line = 21; %circle step20
+% current_folder = 'robotcode_first_adapt2019-02-14_1443'; shape = "circle"; n_taps_per_line = 21; %circle step20
 
 %% Using GPLVM Only 
 
@@ -35,7 +35,7 @@ current_folder = 'robotcode_first_adapt2019-02-14_1443'; shape = "circle"; n_tap
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1721'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1728'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1737'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
-% current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1750'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
+current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1750'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1744'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1759'; shape = "circle";n_taps_per_line = 6;%NODISS circle 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1817'; shape = "circle";n_taps_per_line = 6;%NODISS circle 6pt
@@ -74,6 +74,8 @@ current_folder = 'robotcode_first_adapt2019-02-14_1443'; shape = "circle"; n_tap
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-05_1642'; shape = "banana";n_taps_per_line = 3;%NODISS circle 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-05_1609'; shape = "banana";n_taps_per_line = 3;%NODISS circle 6pt
 
+% current_folder = 'runrobot_2d_contouring_NO_DISSIM_3refs2019-11-12_1505'; shape = "circle";n_taps_per_line = 5;%NODISS circle 6pt
+% current_folder = 'runrobot_2d_contouring_NO_DISSIM_3refs2019-11-12_1450'; shape = "circle";n_taps_per_line = 5;%NODISS circle 6pt
 
 
 %% failure tests
@@ -132,3 +134,5 @@ set(gca, 'xminorgrid','on')
 
 print('-dpng', ['/home/lizzie/OneDrive/matlab-figs/', current_folder,'ALL.png']);
 savefig(['/home/lizzie/OneDrive/matlab-figs/', current_folder,'ALL.fig']);
+
+show_all_taps_mu_disp_predicts
