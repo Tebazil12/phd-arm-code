@@ -8,6 +8,8 @@ classdef Experiment_NO_DISSIM_3refs < handle
         robot
         ref_diffs_norm_max_ind
         ref_diffs_norm
+        ref_ys
+        ref_xs
         dissim_locations
         taps_disp_mu_preds=[];
     end
@@ -210,14 +212,14 @@ classdef Experiment_NO_DISSIM_3refs < handle
             model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_default ones(length(xs_default),1)])
             
             % Add single ref tap as first data in model
-            ref_ys = [self.ref_diffs_norm{1}(self.ref_diffs_norm_max_ind{1} ,:  ,1) self.ref_diffs_norm{1}(self.ref_diffs_norm_max_ind{1} ,:  ,2);...
+            self.ref_ys = [self.ref_diffs_norm{1}(self.ref_diffs_norm_max_ind{1} ,:  ,1) self.ref_diffs_norm{1}(self.ref_diffs_norm_max_ind{1} ,:  ,2);...
                       self.ref_diffs_norm{2}(self.ref_diffs_norm_max_ind{2} ,:  ,1) self.ref_diffs_norm{2}(self.ref_diffs_norm_max_ind{2} ,:  ,2);...
                       self.ref_diffs_norm{3}(self.ref_diffs_norm_max_ind{3} ,:  ,1) self.ref_diffs_norm{3}(self.ref_diffs_norm_max_ind{3} ,:  ,2)];
-            refs_xs = [-1 1; 0 1; 1 1];
-            model.add_data_to_model_direct(ref_ys, refs_xs)
+            self.ref_xs = [-1 1; 0 1; 1 1];
+%             model.add_data_to_model_direct(ref_ys, refs_xs)
             
             %find shift using gplvm and single ref, previous lines and new line
-            x_min  = model.radius_diss_shift(ys_for_real(n_useless_taps+1:end,:), xs_default);%remove first 3 y points as not in line
+            x_min  = model.radius_diss_shift(ys_for_real(n_useless_taps+1:end,:), xs_default, self.ref_ys, self.ref_xs);%remove first 3 y points as not in line
             xs_current_step = xs_default + x_min; % so all minima are aligned
             
             %add data to model by optimising mu for line

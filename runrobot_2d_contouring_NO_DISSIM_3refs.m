@@ -231,7 +231,7 @@ for current_step = current_step+1:MAX_STEPS % (&& not returned to begining locat
         % calc dissim, align to 0 (edge)
         [ys_for_real] = ex.process_taps(ex.data{current_step});
         xs_default = [-10:4:10]';
-        x_min  = model.radius_diss_shift(ys_for_real(n_useless_taps+1:end,:), xs_default);
+        x_min  = model.radius_diss_shift(ys_for_real(n_useless_taps+1:end,:), xs_default, ex.ref_ys, ex.ref_xs);
 
         xs_current_step = xs_default + x_min; % so all minima are aligned
         

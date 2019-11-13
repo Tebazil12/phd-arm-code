@@ -121,13 +121,12 @@ classdef GPLVM_NO_DISSIM < handle
             self.x_gplvm_input_train = xs;            
         end
         
-        function estimated_shift  = radius_diss_shift(self, ys_line, xs_line)
+        function estimated_shift  = radius_diss_shift(self, ys_line, xs_line, ref_y, ref_x)
         % Predicts shift of data using gplvm, copying
         % code from ...optmmu_sep.m. Replaces funciton that was in Experiment
         
             disp("Getting line shift")
-            
-            
+
             %%%
                 
             init_latent_vars = 0;
@@ -136,8 +135,8 @@ classdef GPLVM_NO_DISSIM < handle
             [par, ~, flag] = fminunc(@(opt_pars)gplvm_max_log_like(self.sigma_f,...
                                                                    [self.l_disp self.l_mu],...
                                                                    self.sigma_n_y,...
-                                                                   [self.y_gplvm_input_train; ys_line],...
-                                                                   [self.x_gplvm_input_train; xs_line+opt_pars(1) ones(size(xs_line))]),...
+                                                                   [ref_y; self.y_gplvm_input_train; ys_line],...
+                                                                   [ref_x; self.x_gplvm_input_train; xs_line+opt_pars(1) ones(size(xs_line))]),...
                                         init_latent_vars,...
                                         optimoptions('fminunc','Display','off','MaxFunEvals',10000));
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
