@@ -35,7 +35,7 @@ file_name = '/all_data.mat';
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1721'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1728'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1737'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
-current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1750'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
+% current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1750'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1744'; shape = "flower";n_taps_per_line = 6;%NODISS flower 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1759'; shape = "circle";n_taps_per_line = 6;%NODISS circle 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1817'; shape = "circle";n_taps_per_line = 6;%NODISS circle 6pt
@@ -76,6 +76,11 @@ current_folder = 'runrobot_2d_contouring_NO_DISSIM2019-11-03_1750'; shape = "flo
 
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM_3refs2019-11-12_1505'; shape = "circle";n_taps_per_line = 5;%NODISS circle 6pt
 % current_folder = 'runrobot_2d_contouring_NO_DISSIM_3refs2019-11-12_1450'; shape = "circle";n_taps_per_line = 5;%NODISS circle 6pt
+
+% current_folder = 'runrobot_2d_contouring_NO_DISSIM_3refs2019-11-13_1224'; shape = "circle";n_taps_per_line = 5;%NODISS circle 6pt
+current_folder = 'runrobot_2d_contouring_NO_DISSIM_3refs2019-11-13_1324'; shape = "flower";n_taps_per_line = 3;%NODISS circle 6pt
+% current_folder = 'runrobot_2d_contouring_NO_DISSIM_3refs2019-11-13_1332'; shape = "flower";n_taps_per_line = 5;%NODISS circle 6pt
+
 
 
 %% failure tests

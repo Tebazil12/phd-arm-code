@@ -66,10 +66,10 @@
 % 252
 % clf
 dissims=[];
-ref = [ex.ref_diffs_norm(ex.ref_diffs_norm_max_ind ,:  ,1) ex.ref_diffs_norm(ex.ref_diffs_norm_max_ind ,:  ,2)];
-% ref = [ex.ref_diffs_norm{2}(ex.ref_diffs_norm_max_ind{2} ,:  ,1) ex.ref_diffs_norm{2}(ex.ref_diffs_norm_max_ind{2} ,:  ,2)];
+% ref = [ex.ref_diffs_norm(ex.ref_diffs_norm_max_ind ,:  ,1) ex.ref_diffs_norm(ex.ref_diffs_norm_max_ind ,:  ,2)];
+ref = [ex.ref_diffs_norm{2}(ex.ref_diffs_norm_max_ind{2} ,:  ,1) ex.ref_diffs_norm{2}(ex.ref_diffs_norm_max_ind{2} ,:  ,2)];
 
-n_ref_taps = 1;
+n_ref_taps = 0;
 
 n_lines = size(model.y_gplvm_input_train,1)/n_taps_per_line;%5;
 
