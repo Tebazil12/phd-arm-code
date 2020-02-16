@@ -9,6 +9,11 @@ classdef Experiment < handle
         ref_diffs_norm_max_ind
         ref_diffs_norm
         dissim_locations
+        
+        robot_serial
+        ref_tap
+        still_tap
+        sensor
     end
     properties (Constant)
       sigma_n_diss = 5;%0.5;%1.94;
@@ -20,6 +25,20 @@ classdef Experiment < handle
            self.data = temp;
         end
         
+%         function do_tap(self,current_step)
+%             self.tap_number = self.tap_number +1; %count taps on this line
+% 
+%             % start camera recording
+%             self.camera.start
+% 
+%             % collect data & store
+%             tacData = self.robot.recordAction;
+%             self.data{current_step}{self.tap_number} = tacData; % current step is which radius/line currently on, tap_number is how many taps on this current line
+%             
+%             
+%             % stop camera recording
+%             self.camera.stop
+%         end%good
         function do_tap(self,current_step)
             self.tap_number = self.tap_number +1; %count taps on this line
 
@@ -170,91 +189,199 @@ classdef Experiment < handle
             current_step = 1; % bootstrap is always the first set of collected data
             model = GPLVM;
 
-            self.current_rotation = 0;% clockwise = -ve, anti-clock= +ve
-            
-            px = -3;
-            py = 0;
-            % find direction of first line,
-            %3 taps, at 90degs, calc gradient (gradient decent?)
-            self.move_and_tap([px py self.current_rotation],current_step);
-            [~, dissim_o]= self.process_single_tap(self.data{current_step}{self.tap_number})
-
-            self.move_and_tap([px+1 py self.current_rotation],current_step);
-            [~, dissim_x]= self.process_single_tap(self.data{current_step}{self.tap_number})
-
-            self.move_and_tap([px py+1 self.current_rotation],current_step);
-            [~, dissim_y]= self.process_single_tap(self.data{current_step}{self.tap_number})
-
-            % find angle where direction is most decreasing in dissimilarity
-            rotation_offset = atan2d(dissim_o - dissim_y, dissim_o - dissim_x)
-
-%             self.current_rotation = rotation_offset; %assumes ref tap is to west of tip and stimulus is near west for first taps (as 0deg is east)
-
             % collect line
             %%%%%%%%%%%%%%%%%%%%%%REPEATED CODE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             n_useless_taps = self.tap_number; %so can exlude points later on
+            
             % tap along "radius" 
             for disp_from_start = -10:10 
-                temp_point = [px py] + disp_from_start*[cosd(rotation_offset)...
-                                                        sind(rotation_offset)];
-                self.move_and_tap([temp_point rotation_offset],current_step);%hereafter current_rotation == rotation_offset
+
+                % move distance predicted 
+                if disp_from_start < 0 
+                    command_to_send = "-";
+                else
+                    command_to_send = "+";
+                end
+
+                if disp_from_start <10 && disp_from_start >-10
+                    command_to_send = strcat(command_to_send, "0");
+                end
+
+                command_to_send = strcat(command_to_send, int2str(abs(disp_from_start)), "_FR_rotateHip")
+
+                % Do tap
+                resp = writeread(self.robot_serial,command_to_send)%this is a tap
+                pause(1.5); % give time to get there
+                self.tap_number = self.tap_number +1;
+                pins = self.sensor.record;
+                self.data{current_step}{self.tap_number} = pins;
             end
 
-            % calc dissim, align to 0 (edge)
-            [dissims, ys_for_real] = self.process_taps(self.data{current_step});
+            [dissims, ys_for_real] = ex.process_taps(ex.data{current_step});
             xs_default = [-10:10]';
             x_min  = self.radius_diss_shift(dissims(n_useless_taps+1:end), xs_default);%remove first 3 points as not in line
 
             xs_current_step = xs_default + x_min; % so all minima are aligned
-            
+
             %error check, see if minima was actually in range (ie end points arent minima, but somewhere in middle)
             [~,min_i] = min(dissims(n_useless_taps+1:end));
             if  min_i== 1 || min_i == length(dissims(n_useless_taps+1:end))
                 warning("Minimum diss was at far end, actual minima probably not found, model may be bad")
             end
-            % location closest to 0 dissim is point for next extrapolation
-            self.dissim_locations = [px py] - x_min*[cosd(self.current_rotation)...
-                                                     sind(self.current_rotation)]; %TODO check sign of x_min %cat onto bottom, use dissim_locations(end,:) to get last point
 
-
+            %%%%%%%%%%%%%%%%%%%%%%REPEATED CODE END%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
             % init model hyper params using collected line data
             model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_current_step ones(21,1)])
-            %%%%%%%%%%%%%%%%%%%%%%REPEATED CODE END%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            % rotate hips by x_min in next phases of walking
+            turn_hips_by = round(x_min);
+            
+            %%%% MORE REPEATED CODE %%%%%%
+            if abs(turn_hips_by) > TOL % not worth time & energy twisting if less than 2
+                if turn_hips_by < 0 
+                    start_hip_rotation_command = "-";
+                    start_hip_antirotation_command = "+";
+                else
+                    start_hip_rotation_command = "+";
+                    start_hip_antirotation_command = "-";
+                end
+
+                if turn_hips_by <10 && turn_hips_by >-10
+                    start_hip_rotation_command = strcat(start_hip_rotation_command, "0");
+                    start_hip_antirotation_command = strcat(start_hip_antirotation_command, "0");
+                end
+
+                start_hip_rotation_command = strcat(start_hip_rotation_command, int2str(abs(turn_hips_by)));
+                start_hip_antirotation_command = strcat(start_hip_antirotation_command, int2str(abs(turn_hips_by)));
+            end 
+
+            % next walking steps ...
+            resp = writeread(self.robot_serial,"FR_leg_side")
+            pause(1.5);
+
+            command_to_send = strcat(start_hip_antirotation_command, "_BLm_rotateHip");
+            resp = writeread(self.robot_serial,command_to_send)
+            pause(3);
+
+            command_to_send = strcat(start_hip_antirotation_command, "_BR_rotateHip");
+            resp = writeread(self.robot_serial,command_to_send)
+            pause(3);
+
+            command_to_send = strcat(start_hip_antirotation_command, "_FLm_rotateHip");
+            resp = writeread(self.robot_serial,command_to_send)
+            pause(3);
+
+            resp = writeread(self.robot_serial,"FR_leg_forward") % this has to be here as turning for tapping needs to happen in forward pose, so can't move from side to back in hip twist
+            pause(1.5);
+
+            resp = writeread(self.robot_serial,"FRf_body_forward")
+            pause(1.5);
+
+            resp = writeread(self.robot_serial,"BL_leg_forward")
+            pause(1.5);
+
+            command_to_send = strcat(start_hip_rotation_command, "_BLs_rotateHip");
+            resp = writeread(self.robot_serial,command_to_send)
+            pause(1.5);
+
+            resp = writeread(self.robot_serial,"FL_leg_forward")
+            pause(1.5);
+
+            command_to_send = strcat(start_hip_rotation_command, "_FLe_rotateHip");
+            resp = writeread(self.robot_serial,command_to_send)
+            pause(1.5);
+
+            resp = writeread(self.robot_serial,"FLf_body_forward")
+            pause(1.5);
+
+            resp = writeread(self.robot_serial,"BR_leg_forward")
+            pause(1.5);
+            
+            %%%% END - MORE REPEATED CODE %%%%%%
             
             disp("...finished bootstrap")
         end%one TODO
         
+%         function [processed_tap, diss] = process_single_tap(self,tap_data)
+%         % Tap data should be (1:n_frames,1:127,1:2) dimensions
+%         % processed_tap is (1:254)
+%         % diss is (1:1)
+% 
+%             current_tap_data_norm = tap_data(: ,:  ,:)- tap_data(1 ,:  ,:);
+% 
+%             % diff_between_noncontacts = ref_tap(1 ,:  ,:) - radii_data{1,tap_num}(1 ,:  ,:); %TODO throw error if too large?
+% 
+%             n_pins = size(tap_data,2);
+%             max_i = zeros(1, n_pins);
+%             for pin = 1:n_pins
+% 
+%                 [~,max_ind_x]=max(abs(current_tap_data_norm(: ,pin  ,1)));
+%                 [~,max_ind_y]=max(abs(current_tap_data_norm(: ,pin  ,2)));
+% 
+%                 max_i(1,pin) = max_ind_x;
+%                 max_i(2,pin) = max_ind_y;
+%             end
+% 
+%             average_max_i = round(mean([max_i(1,:)  max_i(2,:)],2)); % want to compare same frame across tap, not different frames for each pin
+% 
+%             processed_tap = [current_tap_data_norm(average_max_i,:,1) current_tap_data_norm(average_max_i,:,2)];
+% 
+%             % dissimilarity measure 
+%             differences = self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,:) ...
+%                                   - current_tap_data_norm(average_max_i,:,:);
+%             diss = norm([differences(:,:,1)'; differences(:,:,2)']);
+% 
+%         end%good
         function [processed_tap, diss] = process_single_tap(self,tap_data)
         % Tap data should be (1:n_frames,1:127,1:2) dimensions
         % processed_tap is (1:254)
         % diss is (1:1)
 
-            current_tap_data_norm = tap_data(: ,:  ,:)- tap_data(1 ,:  ,:);
+            tap_disps = tap_data - self.still_tap;
 
-            % diff_between_noncontacts = ref_tap(1 ,:  ,:) - radii_data{1,tap_num}(1 ,:  ,:); %TODO throw error if too large?
-
-            n_pins = size(tap_data,2);
-            max_i = zeros(1, n_pins);
-            for pin = 1:n_pins
-
-                [~,max_ind_x]=max(abs(current_tap_data_norm(: ,pin  ,1)));
-                [~,max_ind_y]=max(abs(current_tap_data_norm(: ,pin  ,2)));
-
-                max_i(1,pin) = max_ind_x;
-                max_i(2,pin) = max_ind_y;
-            end
-
-            average_max_i = round(mean([max_i(1,:)  max_i(2,:)],2)); % want to compare same frame across tap, not different frames for each pin
-
-            processed_tap = [current_tap_data_norm(average_max_i,:,1) current_tap_data_norm(average_max_i,:,2)];
+            processed_tap = [tap_disps(:,:,1) tap_disps(:,:,2)];
 
             % dissimilarity measure 
-            differences = self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,:) ...
-                                  - current_tap_data_norm(average_max_i,:,:);
+            differences = self.ref_tap - tap_disps;
             diss = norm([differences(:,:,1)'; differences(:,:,2)']);
 
         end%good
         
+%         function [dissims, y_processed] = process_taps(self,radii_data)
+%         % Return modified y data (1 by 256), dissimilarity data and the minimum x point
+%         % for a single radius of data (intended to be a single radius).
+% 
+%             y_processed = [];
+%             dissims = [];
+% 
+%             for tap_num = 1:length(radii_data) %TODO? is length safe, maybe use size(,)?
+%                 current_tap_data_norm = radii_data{1,tap_num}(: ,:  ,:)- radii_data{1,tap_num}(1 ,:  ,:);
+%                 
+%                 n_pins = size(radii_data{1,1},2);
+%                 max_i = zeros(1, n_pins);
+%                 for pin = 1:n_pins
+% 
+%                     [~,max_ind_x]=max(abs(current_tap_data_norm(: ,pin  ,1)));
+%                     [~,max_ind_y]=max(abs(current_tap_data_norm(: ,pin  ,2)));
+% 
+%                     max_i(1,pin) = max_ind_x;
+%                     max_i(2,pin) = max_ind_y;
+%                 end
+% 
+%                 average_max_i = round(mean([max_i(1,:)  max_i(2,:)],2)); % want to compare same frame across tap, not different frames for each pin
+% 
+%                 differences = self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,:) ...
+%                               - current_tap_data_norm(average_max_i,:,:); 
+% 
+%                 y_processed = [y_processed;...
+%                               current_tap_data_norm(average_max_i,:,1) current_tap_data_norm(average_max_i,:,2)]; %#ok<AGROW>
+% 
+%                 diss = norm([differences(:,:,1)'; differences(:,:,2)']);
+%                 dissims =[dissims diss]; %#ok<AGROW>
+%             end
+%         end%good
+
         function [dissims, y_processed] = process_taps(self,radii_data)
         % Return modified y data (1 by 256), dissimilarity data and the minimum x point
         % for a single radius of data (intended to be a single radius).
@@ -263,26 +390,12 @@ classdef Experiment < handle
             dissims = [];
 
             for tap_num = 1:length(radii_data) %TODO? is length safe, maybe use size(,)?
-                current_tap_data_norm = radii_data{1,tap_num}(: ,:  ,:)- radii_data{1,tap_num}(1 ,:  ,:);
-                
-                n_pins = size(radii_data{1,1},2);
-                max_i = zeros(1, n_pins);
-                for pin = 1:n_pins
+                tap_disps = radii_data{1,tap_num} - self.still_tap;
 
-                    [~,max_ind_x]=max(abs(current_tap_data_norm(: ,pin  ,1)));
-                    [~,max_ind_y]=max(abs(current_tap_data_norm(: ,pin  ,2)));
-
-                    max_i(1,pin) = max_ind_x;
-                    max_i(2,pin) = max_ind_y;
-                end
-
-                average_max_i = round(mean([max_i(1,:)  max_i(2,:)],2)); % want to compare same frame across tap, not different frames for each pin
-
-                differences = self.ref_diffs_norm(self.ref_diffs_norm_max_ind ,:  ,:) ...
-                              - current_tap_data_norm(average_max_i,:,:); 
+                differences = self.ref_tap - tap_disps; 
 
                 y_processed = [y_processed;...
-                              current_tap_data_norm(average_max_i,:,1) current_tap_data_norm(average_max_i,:,2)]; %#ok<AGROW>
+                              tap_disps(:,:,1) tap_disps(:,:,2)]; %#ok<AGROW>
 
                 diss = norm([differences(:,:,1)'; differences(:,:,2)']);
                 dissims =[dissims diss]; %#ok<AGROW>
