@@ -16,7 +16,7 @@ classdef Experiment < handle
         sensor
     end
     properties (Constant)
-      sigma_n_diss = 5;%0.5;%1.94;
+      sigma_n_diss = 2.5;%5;%0.5;%1.94;
     end
 
     methods
@@ -54,6 +54,85 @@ classdef Experiment < handle
             self.camera.stop
         end%good
         
+%         function x_min  = radius_diss_shift(self,dissims, x_matrix)
+%         % Return number that when added to the suggested x values, shifts the
+%         % values so that the trough (minima) lines up with 0. Uses a gp to estimate
+%         % smooth curve rather than using raw dissim values (gp may need tuning
+%         % under different circs e.g. harder taps giving higher dissims).Plot raw
+%         % and gp estimates for reference.
+% 
+%             if size(x_matrix(:,1),1) ~= size(dissims',1)
+%                 x_matrix(:,1)
+%                 dissims' %#ok<NOPRT>
+%                 error("dissims and x_matrix are different lengths")
+%             end
+%             % Get gp for this specific radius
+%             [par, ~, ~] = fminunc(@(mypar)gp_max_log_like(mypar(1), mypar(2), self.sigma_n_diss,...
+%                                                                 dissims' , x_matrix(:,1)),...
+%                                         [1 1] ,optimoptions('fminunc','Display','off'));
+% 
+%             sigma_f = par(1);
+%             l = par(2);
+% 
+%             % Get K matrix for this radius
+%             k_cap = calc_k_cap(x_matrix(:,1), sigma_f,l, self.sigma_n_diss);
+% 
+%             % Estimate position over length of radius
+%             i = 1;
+%             for x_star = -10:0.1:10
+%         %         if sum(-20:10 == x_star) == 0
+%                     x_stars(i) = x_star; %#ok<AGROW>
+% 
+%                     % setup covariance matrix stuff
+%                     k_star      = calc_k_star(x_star, x_matrix(:,1), sigma_f,l, self.sigma_n_diss);
+%                     k_star_star = calc_covar_ij(x_star, x_star, sigma_f,l);
+% 
+%                     % Estimate y
+%                     y_star(i) = k_star * inv(k_cap) * dissims'; %#ok<MINV,AGROW>
+% 
+%                     % Estimate variance
+%                     var_y_star(i) = k_star_star - (k_star * inv(k_cap) * transpose(k_star)); %#ok<MINV,AGROW>
+%                     if var_y_star(i) < 0.0000
+%                         var_y_star(i) =0; %#ok<AGROW> % otherwise -0.0000 causes errors with sqrt()
+%                     end
+% 
+%                     i = i+1;
+%         %         end
+%             end
+% 
+%             [~,x_min_ind] = min(y_star);
+%             x_min = -x_stars(x_min_ind);
+% % 
+% %             %% Plot input
+% %             figure(2)
+% %             subplot(1,2,1)
+% %         %     clf
+% %             hold on
+% %             title("Original")
+% %         %     fill([x_stars, fliplr(x_stars)],...
+% %         %          [y_star+sqrt(var_y_star), fliplr(y_star-sqrt(var_y_star))],...
+% %         %          [1 1 0.8])
+% % 
+% %             plot(x_matrix(:,1), dissims, '+')
+%             hold on
+%             plot(x_matrix, dissims)
+%             plot(x_stars, y_star)
+% %             axis([-10 10 0 90])
+% %             hold off
+% % 
+% %             %% Plot output
+% %             subplot(1,2,2)
+% %             hold on
+% %             title("Troughs aligned")
+% %             plot(x_matrix(:,1)+x_min, dissims, '+')
+% %             plot(x_stars+x_min, y_star)
+% %             grid on
+% %             grid minor
+% %             axis([-10 10 0 90])
+% %             hold off
+% 
+%         end%good
+
         function x_min  = radius_diss_shift(self,dissims, x_matrix)
         % Return number that when added to the suggested x values, shifts the
         % values so that the trough (minima) lines up with 0. Uses a gp to estimate
@@ -61,47 +140,47 @@ classdef Experiment < handle
         % under different circs e.g. harder taps giving higher dissims).Plot raw
         % and gp estimates for reference.
 
-            if size(x_matrix(:,1),1) ~= size(dissims',1)
-                x_matrix(:,1)
-                dissims' %#ok<NOPRT>
-                error("dissims and x_matrix are different lengths")
-            end
-            % Get gp for this specific radius
-            [par, ~, ~] = fminunc(@(mypar)gp_max_log_like(mypar(1), mypar(2), self.sigma_n_diss,...
-                                                                dissims' , x_matrix(:,1)),...
-                                        [10 1] ,optimoptions('fminunc','Display','off'));
+%             if size(x_matrix(:,1),1) ~= size(dissims',1)
+%                 x_matrix(:,1)
+%                 dissims' %#ok<NOPRT>
+%                 error("dissims and x_matrix are different lengths")
+%             end
+%             % Get gp for this specific radius
+%             [par, ~, ~] = fminunc(@(mypar)gp_max_log_like(mypar(1), mypar(2), self.sigma_n_diss,...
+%                                                                 dissims' , x_matrix(:,1)),...
+%                                         [1 1] ,optimoptions('fminunc','Display','off'));
+% 
+%             sigma_f = par(1);
+%             l = par(2);
+% 
+%             % Get K matrix for this radius
+%             k_cap = calc_k_cap(x_matrix(:,1), sigma_f,l, self.sigma_n_diss);
+% 
+%             % Estimate position over length of radius
+%             i = 1;
+%             for x_star = -10:0.1:10
+%         %         if sum(-20:10 == x_star) == 0
+%                     x_stars(i) = x_star; %#ok<AGROW>
+% 
+%                     % setup covariance matrix stuff
+%                     k_star      = calc_k_star(x_star, x_matrix(:,1), sigma_f,l, self.sigma_n_diss);
+%                     k_star_star = calc_covar_ij(x_star, x_star, sigma_f,l);
+% 
+%                     % Estimate y
+%                     y_star(i) = k_star * inv(k_cap) * dissims'; %#ok<MINV,AGROW>
+% 
+%                     % Estimate variance
+%                     var_y_star(i) = k_star_star - (k_star * inv(k_cap) * transpose(k_star)); %#ok<MINV,AGROW>
+%                     if var_y_star(i) < 0.0000
+%                         var_y_star(i) =0; %#ok<AGROW> % otherwise -0.0000 causes errors with sqrt()
+%                     end
+% 
+%                     i = i+1;
+%         %         end
+%             end
 
-            sigma_f = par(1);
-            l = par(2);
-
-            % Get K matrix for this radius
-            k_cap = calc_k_cap(x_matrix(:,1), sigma_f,l, self.sigma_n_diss);
-
-            % Estimate position over length of radius
-            i = 1;
-            for x_star = -10:0.1:10
-        %         if sum(-20:10 == x_star) == 0
-                    x_stars(i) = x_star; %#ok<AGROW>
-
-                    % setup covariance matrix stuff
-                    k_star      = calc_k_star(x_star, x_matrix(:,1), sigma_f,l, self.sigma_n_diss);
-                    k_star_star = calc_covar_ij(x_star, x_star, sigma_f,l);
-
-                    % Estimate y
-                    y_star(i) = k_star * inv(k_cap) * dissims'; %#ok<MINV,AGROW>
-
-                    % Estimate variance
-                    var_y_star(i) = k_star_star - (k_star * inv(k_cap) * transpose(k_star)); %#ok<MINV,AGROW>
-                    if var_y_star(i) < 0.0000
-                        var_y_star(i) =0; %#ok<AGROW> % otherwise -0.0000 causes errors with sqrt()
-                    end
-
-                    i = i+1;
-        %         end
-            end
-
-            [~,x_min_ind] = min(y_star);
-            x_min = -x_stars(x_min_ind);
+            [~,x_min_ind] = min(dissims);
+            x_min = -x_matrix(x_min_ind);
 % 
 %             %% Plot input
 %             figure(2)
@@ -114,7 +193,8 @@ classdef Experiment < handle
 %         %          [1 1 0.8])
 % 
 %             plot(x_matrix(:,1), dissims, '+')
-%             plot(x_matrix(:,1), dissims)
+            hold on
+            plot(x_matrix, dissims)
 %             plot(x_stars, y_star)
 %             axis([-10 10 0 90])
 %             hold off
@@ -194,7 +274,7 @@ classdef Experiment < handle
             n_useless_taps = self.tap_number; %so can exlude points later on
             
             % tap along "radius" 
-            for disp_from_start = -10:10 
+            for disp_from_start = -10:2:10 
 
                 % move distance predicted 
                 if disp_from_start < 0 
@@ -215,10 +295,13 @@ classdef Experiment < handle
                 self.tap_number = self.tap_number +1;
                 pins = self.sensor.record;
                 self.data{current_step}{self.tap_number} = pins;
+                if size(pins,2) ~= 37
+                    error("New tap is not same size as ref_tap")
+                end
             end
 
-            [dissims, ys_for_real] = ex.process_taps(ex.data{current_step});
-            xs_default = [-10:10]';
+            [dissims, ys_for_real] = self.process_taps(self.data{current_step});
+            xs_default = [-10:2:10]';
             x_min  = self.radius_diss_shift(dissims(n_useless_taps+1:end), xs_default);%remove first 3 points as not in line
 
             xs_current_step = xs_default + x_min; % so all minima are aligned
@@ -232,13 +315,16 @@ classdef Experiment < handle
             %%%%%%%%%%%%%%%%%%%%%%REPEATED CODE END%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             % init model hyper params using collected line data
-            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_current_step ones(21,1)])
+            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_current_step ones(11,1)])
             
             % rotate hips by x_min in next phases of walking
-            turn_hips_by = round(x_min);
+            turn_hips_by = round(-x_min)
             
             %%%% MORE REPEATED CODE %%%%%%
-            if abs(turn_hips_by) > TOL % not worth time & energy twisting if less than 2
+            if abs(turn_hips_by) < 2 % not worth time & energy twisting if less than 2
+                start_hip_rotation_command = "+00";
+                start_hip_antirotation_command= "+00";
+            else
                 if turn_hips_by < 0 
                     start_hip_rotation_command = "-";
                     start_hip_antirotation_command = "+";
@@ -252,13 +338,13 @@ classdef Experiment < handle
                     start_hip_antirotation_command = strcat(start_hip_antirotation_command, "0");
                 end
 
-                start_hip_rotation_command = strcat(start_hip_rotation_command, int2str(abs(turn_hips_by)));
+                start_hip_rotation_command = strcat(start_hip_rotation_command, int2str(abs(turn_hips_by)))
                 start_hip_antirotation_command = strcat(start_hip_antirotation_command, int2str(abs(turn_hips_by)));
             end 
 
-            % next walking steps ...
-            resp = writeread(self.robot_serial,"FR_leg_side")
-            pause(1.5);
+             % next walking steps ...
+        %     resp = writeread(self.robot_serial,"FR_leg_side")
+        %     pause(1.5);
 
             command_to_send = strcat(start_hip_antirotation_command, "_BLm_rotateHip");
             resp = writeread(self.robot_serial,command_to_send)
@@ -272,7 +358,7 @@ classdef Experiment < handle
             resp = writeread(self.robot_serial,command_to_send)
             pause(3);
 
-            resp = writeread(self.robot_serial,"FR_leg_forward") % this has to be here as turning for tapping needs to happen in forward pose, so can't move from side to back in hip twist
+            resp = writeread(self.robot_serial,"FR_leg_forward_tap") % this has to be here as turning for tapping needs to happen in forward pose, so can't move from side to back in hip twist
             pause(1.5);
 
             resp = writeread(self.robot_serial,"FRf_body_forward")
@@ -297,6 +383,7 @@ classdef Experiment < handle
 
             resp = writeread(self.robot_serial,"BR_leg_forward")
             pause(1.5);
+
             
             %%%% END - MORE REPEATED CODE %%%%%%
             

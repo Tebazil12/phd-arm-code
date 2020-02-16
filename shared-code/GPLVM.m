@@ -24,7 +24,7 @@ classdef GPLVM < handle
         x_gplvm_input_train
     end
     properties (Constant)
-      sigma_n_y = 1.14;
+      sigma_n_y = 0.3786;
     end
 
     methods       
@@ -41,7 +41,7 @@ classdef GPLVM < handle
             end
             
             %% Optimize hyper-params %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%     
-            init_hyper_pars = [1 300 5];
+            init_hyper_pars = [0.1 50 5];
 
             [par, ~, flag] = fminunc(@(opt_pars)gplvm_max_log_like(opt_pars(1), ...
                                                                    [opt_pars(2) opt_pars(3)], ...
