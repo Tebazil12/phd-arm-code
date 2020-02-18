@@ -13,6 +13,7 @@ classdef Experiment < handle
         robot_serial
         ref_tap
         still_tap
+        still_tap_array
         sensor
     end
     properties (Constant)
@@ -261,7 +262,7 @@ classdef Experiment < handle
             self.actual_locations{current_step}{self.tap_number} = location;
         end%good
         
-        function [model, current_step] = bootstrap(self)
+        function [model, current_step] = bootstrap(self, EDGE_TRACK_DISTANCE)
         % Find initial search line angle, collect data along this orientation, find
         % edge, add data to model with corrected x disps. 
             disp("Starting bootstrap...")
@@ -274,7 +275,7 @@ classdef Experiment < handle
             n_useless_taps = self.tap_number; %so can exlude points later on
             
             % tap along "radius" 
-            for disp_from_start = -10:2:10 
+            for disp_from_start = -15+EDGE_TRACK_DISTANCE:1:15+EDGE_TRACK_DISTANCE 
 
                 % move distance predicted 
                 if disp_from_start < 0 
@@ -291,6 +292,7 @@ classdef Experiment < handle
 
                 % Do tap
                 resp = writeread(self.robot_serial,command_to_send)%this is a tap
+%                 self.sensor.setPins(self.still_tap_array);
                 pause(1.5); % give time to get there
                 self.tap_number = self.tap_number +1;
                 pins = self.sensor.record;
@@ -301,7 +303,7 @@ classdef Experiment < handle
             end
 
             [dissims, ys_for_real] = self.process_taps(self.data{current_step});
-            xs_default = [-10:2:10]';
+            xs_default = [-15:1:15]';
             x_min  = self.radius_diss_shift(dissims(n_useless_taps+1:end), xs_default);%remove first 3 points as not in line
 
             xs_current_step = xs_default + x_min; % so all minima are aligned
@@ -315,7 +317,7 @@ classdef Experiment < handle
             %%%%%%%%%%%%%%%%%%%%%%REPEATED CODE END%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             % init model hyper params using collected line data
-            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_current_step ones(11,1)])
+            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_current_step ones(31,1)])
             
             % rotate hips by x_min in next phases of walking
             turn_hips_by = round(-x_min)
@@ -345,6 +347,9 @@ classdef Experiment < handle
              % next walking steps ...
         %     resp = writeread(self.robot_serial,"FR_leg_side")
         %     pause(1.5);
+            command_to_send = strcat(start_hip_rotation_command, "_FR_rotateHip")
+            resp = writeread(self.robot_serial,command_to_send)
+            pause(3);
 
             command_to_send = strcat(start_hip_antirotation_command, "_BLm_rotateHip");
             resp = writeread(self.robot_serial,command_to_send)
@@ -358,8 +363,8 @@ classdef Experiment < handle
             resp = writeread(self.robot_serial,command_to_send)
             pause(3);
 
-            resp = writeread(self.robot_serial,"FR_leg_forward_tap") % this has to be here as turning for tapping needs to happen in forward pose, so can't move from side to back in hip twist
-            pause(1.5);
+%             resp = writeread(self.robot_serial,"FR_leg_forward_tap") % this has to be here as turning for tapping needs to happen in forward pose, so can't move from side to back in hip twist
+%             pause(1.5);
 
             resp = writeread(self.robot_serial,"FRf_body_forward")
             pause(1.5);
