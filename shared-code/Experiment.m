@@ -15,6 +15,7 @@ classdef Experiment < handle
         still_tap
         still_tap_array
         sensor
+        search_angles
     end
     properties (Constant)
       sigma_n_diss = 5;%5;%0.5;%1.94;
@@ -159,7 +160,7 @@ classdef Experiment < handle
 
             % Estimate position over length of radius
             i = 1;
-            for x_star = -5:0.1:25
+            for x_star = x_matrix(1):0.1:x_matrix(end)
         %         if sum(-20:10 == x_star) == 0
                     x_stars(i) = x_star; %#ok<AGROW>
 
@@ -277,8 +278,9 @@ classdef Experiment < handle
             resp = writeread(self.robot_serial,"FR_leg_forward_hover") %so tip don't brake
             pause(1.5);
             
+            self.search_angles = -5:1:25 ;
             % tap along "radius" 
-            for disp_from_start = -5+EDGE_TRACK_DISTANCE:1:25+EDGE_TRACK_DISTANCE 
+            for disp_from_start = self.search_angles+EDGE_TRACK_DISTANCE
 
                 % move distance predicted 
                 if disp_from_start < 0 
@@ -306,7 +308,7 @@ classdef Experiment < handle
             end
 
             [dissims, ys_for_real] = self.process_taps(self.data{current_step});
-            xs_default = [-5:1:25]';
+            xs_default = self.search_angles';
             x_min  = self.radius_diss_shift(dissims(n_useless_taps+1:end), xs_default);%remove first 3 points as not in line
 
             xs_current_step = xs_default + x_min; % so all minima are aligned
@@ -320,7 +322,7 @@ classdef Experiment < handle
             %%%%%%%%%%%%%%%%%%%%%%REPEATED CODE END%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             % init model hyper params using collected line data
-            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_current_step ones(31,1)])
+            model.set_new_hyper_params(ys_for_real(n_useless_taps+1:end,:), [xs_current_step ones(length(self.search_angles),1)])
             
             % rotate hips by x_min in next phases of walking
             turn_hips_by = round(-x_min)
