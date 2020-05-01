@@ -5,3 +5,6 @@
 *.pdf
 *.svg
 *.asv
+.idea
+__pycache__
+new

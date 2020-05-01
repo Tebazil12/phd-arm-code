@@ -50,7 +50,11 @@ def load_data():
     return all_data
 
 
-def whatever():
+def whatever(all_data):
+    n_disps = 21
+    n_angles = 19
+    n_depths = 9
+    n_radii = n_angles * n_depths
     x_real= np.empty([n_radii], dtype = object)
     x_real[0] = np.arange(-10,11) #actually -10 to 10 but +1 cuz python
     #print(x_real)
@@ -62,7 +66,7 @@ def whatever():
     print("~~~~~~~~Define reference tap & stuff")
     
     print(type(all_data[5]))
-    ref_tap = all_data[5]#[10][11] 
+    ref_tap = all_data[5][10][11]
     #print(ref_tap)
     print(type(ref_tap))
     print("ref_tap[1]")
