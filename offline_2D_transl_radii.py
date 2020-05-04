@@ -23,24 +23,23 @@ def load_data():
 
 
 def get_ref_tap(all_data):
-    ref_tap_all_frames = all_data[10 - 1][11 - 1]
-    ref_tap_all_frames_norm = ref_tap_all_frames - ref_tap_all_frames[0]
-    # print(len(ref_tap_all_frames_norm))
-    # print(len(ref_tap_all_frames_norm[0]))
-    # print(len(ref_tap_all_frames_norm[0][0]))
-    # print(np.mean(ref_tap_all_frames_norm,axis=1))
-    mean_all_frames = np.mean(ref_tap_all_frames_norm,axis=1)
-    # print((np.mean(ref_tap_all_frames_norm, axis=1)).shape)
-    # print(np.linalg.norm(mean_all_frames, axis=1))
-    distances_all_disps = np.linalg.norm(mean_all_frames, axis=1)
-    # print(distances_all_disps.max())
+    ref_tap_all_frames = all_data[10 - 1][11 - 1] # -1 to translate properly from matlab
+
+    # make into pin displacement instead of absolute position
+    ref_tap_all_frames_disp = ref_tap_all_frames - ref_tap_all_frames[0]
+
+    # Find frame where largest pin displacement takes place (on average) #TODO this method is not the same as in MATLAB!
+    # Average disps per frame (over all pins)
+    mean_disp_per_frame = np.mean(np.abs(ref_tap_all_frames_disp),axis=1)
+
+    # Find euclidean distance per frame
+    distances_all_disps = np.linalg.norm(mean_disp_per_frame, axis=1)
+
+    # Find frame with max euclidean distance
     result = np.where(distances_all_disps == np.amax(distances_all_disps))
     max_frame_i = result[0][0]
-    ref_tap = ref_tap_all_frames_norm[max_frame_i]
 
-    # print(np.sqrt(mean_all_frames[:,0]**2 + mean_all_frames[:,1]**2))
-
-    # print(np.max(ref_tap_all_frames_norm))
+    ref_tap = ref_tap_all_frames_disp[max_frame_i]
     return ref_tap
 
 
@@ -59,11 +58,11 @@ def get_training_data(all_data):
 
 def process_taps(radii_data):
     # radii_data[disp][frame][pin][xory]
-    print(len(radii_data))
+    # print(len(radii_data))
 
     for disp_num in range(0,len(radii_data)):
-        tap_norm = radii_data[disp_num] - radii_data[disp_num][1]
-        print(tap_norm)
+        tap_disps = radii_data[disp_num] - radii_data[disp_num][1]
+        # print(tap_disps)
 
     return [False,False]
 
@@ -71,7 +70,7 @@ def process_taps(radii_data):
 
 if __name__ == "__main__":
     all_data = load_data()
-    print(len(all_data[0]))
+    # print(len(all_data[0]))
 
     ref_tap = get_ref_tap(all_data)
     # print(ref_tap)
