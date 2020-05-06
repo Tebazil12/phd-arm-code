@@ -99,28 +99,50 @@ def calc_dissims(y_train, ref_tap):
     sum_ys = y_train_2d.sum(1)
     sum_ref = ref_tap_2d.sum(0)
     # print("ys and ref")
-    # print(sum_ys)
+    print(sum_ys)
 
-    # print(ref_tap_2d)
+    print(ref_tap.shape)
+    print(y_train.shape)
     # print(sum_ref)
 
+    #TODO recreate matlab ordering of array(to see if this is causing the disparity):
+
+
     # Calculate Euclidean distance as dissimilarity measure
-    # dissim = np.linalg.norm(sum_diffs,axis=1)
+    dissim = np.linalg.norm(sum_diffs,axis=1)
+    print("original dissim")
+    print(dissim)
+
+    # trying to recreate matlab - ignore, its the same results as the working python one, but hard to impolement
+    # across rows properly in pythoon
+    # dissim = np.linalg.norm(diffs_3d[1])
     # print("original dissim")
     # print(dissim)
-    #
+
     # dissim = scipy.spatial.distance.cdist(np.array([[0,0]]), sum_diffs, 'euclidean') #same as above method
     # print("dissim")
     # print(dissim)
     # print(dissim.shape)
 
-    dissim = scipy.spatial.distance.cdist([sum_ref], sum_ys, 'euclidean') #same as above 2 methods
+    # dissim = scipy.spatial.distance.cdist([sum_ref], sum_ys, 'euclidean') #same as above 2 methods
+    # print("dissim sums")
+    # print(dissim[0])
+    # print(dissim.shape)
+
+    #todo this one works well
+    # dissim = scipy.spatial.distance.cdist([ref_tap], y_train, 'euclidean') # NOTsame as above 2 methods
+    # print(diffs.shape)
+
+    #trying to replicate matlabs worse values
+    # dissim = scipy.spatial.distance.cdist(np.empty(diffs.shape), diffs, 'euclidean')
     print("dissim sums")
-    print(dissim[0])
+    print(dissim)
     print(dissim.shape)
 
+    # dissim = scipy.spatial.distance.cdist([ref_tap], y_train, 'cosine')
+
     # dissim = scipy.spatial.distance.cdist([sum_ref], sum_ys, 'cosine')
-    # dissim = np.rad2deg(dissim).round(1)
+    # dissim = np.rad2deg(dissim)
     # print("dissim sums cosine")
     # print(dissim)
     # print(dissim.shape)
@@ -130,6 +152,7 @@ def calc_dissims(y_train, ref_tap):
 
 
 def show_dissim_profile(x_real, dissim_all):
+    print(dissim_all)
     for i in range(0, len(dissim_all)):
         plt.plot(x_real, dissim_all[i])
     ax = plt.gca()
@@ -153,7 +176,7 @@ if __name__ == "__main__":
     # print(y_train_all[0].shape)
     # print(len(dissim_all))
     # print(dissim_all[0].shape)
-    x_real = np.arange(-10,11)
+    x_real = -np.arange(-10,11)
     show_dissim_profile(x_real,dissim_all)
 
     #TODO calcultate line shift based of dissimilarity
