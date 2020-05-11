@@ -1,7 +1,10 @@
 import scipy.io
 import scipy.spatial
+import scipy.optimize
 import numpy as np
 import matplotlib.pyplot as plt
+import gplvm
+import gp
 
 def load_data():
     n_angles = 19
@@ -99,19 +102,19 @@ def calc_dissims(y_train, ref_tap):
     sum_ys = y_train_2d.sum(1)
     sum_ref = ref_tap_2d.sum(0)
     # print("ys and ref")
-    print(sum_ys)
+    # print(sum_ys)
 
-    print(ref_tap.shape)
-    print(y_train.shape)
+    # print(ref_tap.shape)
+    # print(y_train.shape)
     # print(sum_ref)
 
     #TODO recreate matlab ordering of array(to see if this is causing the disparity):
 
 
     # Calculate Euclidean distance as dissimilarity measure
-    dissim = np.linalg.norm(sum_diffs,axis=1)
-    print("original dissim")
-    print(dissim)
+    # dissim = np.linalg.norm(sum_diffs,axis=1)
+    # print("original dissim")
+    # print(dissim)
 
     # trying to recreate matlab - ignore, its the same results as the working python one, but hard to impolement
     # across rows properly in pythoon
@@ -130,14 +133,14 @@ def calc_dissims(y_train, ref_tap):
     # print(dissim.shape)
 
     #todo this one works well
-    # dissim = scipy.spatial.distance.cdist([ref_tap], y_train, 'euclidean') # NOTsame as above 2 methods
+    dissim = scipy.spatial.distance.cdist([ref_tap], y_train, 'euclidean') # NOTsame as above 2 methods
     # print(diffs.shape)
 
     #trying to replicate matlabs worse values
     # dissim = scipy.spatial.distance.cdist(np.empty(diffs.shape), diffs, 'euclidean')
-    print("dissim sums")
-    print(dissim)
-    print(dissim.shape)
+    # print("dissim sums")
+    # print(dissim)
+    # print(dissim.shape)
 
     # dissim = scipy.spatial.distance.cdist([ref_tap], y_train, 'cosine')
 
@@ -151,16 +154,38 @@ def calc_dissims(y_train, ref_tap):
     return dissim[0] # so that not array within array...
 
 
-def show_dissim_profile(x_real, dissim_all):
-    print(dissim_all)
-    for i in range(0, len(dissim_all)):
-        plt.plot(x_real, dissim_all[i])
+def show_dissim_profile(disp, dissim):
+    """ dissim needs to be a list, with each entry a line of taps corresponding with disp"""
+    # print(dissim)
+    for i in range(0, len(dissim)):
+        # print(len(disp))
+        if len(disp) == 1:
+            plt.plot(disp[0], dissim[i])
+        elif len(disp) == len(dissim):
+            plt.plot(disp[i], dissim[i])
+        else:
+            raise NameError('disp not correct length for plotting')
     ax = plt.gca()
     ax.axhline(y=0, color='k')
     ax.axvline(x=0, color='k')
     plt.ylabel('dissim')
-    plt.xlabel('dissim')
+    plt.xlabel('disp')
     plt.show()
+
+def align_all_xs_via_dissim(disp, dissim):
+    #for loop
+    #align each radius
+    align_radius(disp[0], dissim[0])
+    #return list
+    pass
+
+def align_radius(disp, dissim):
+    start_params = [0, 0, 0]
+    data = [disp, dissim]
+    minimizer_kwargs = {"args": data}
+    result = scipy.optimize.basinhopping(gp.max_log_like, start_params, minimizer_kwargs=minimizer_kwargs)
+    print("done")
+    print(result)
 
 if __name__ == "__main__":
     all_data = load_data()
@@ -170,13 +195,15 @@ if __name__ == "__main__":
     # print(ref_tap)
     # print((ref_tap.shape))
 
-    [y_train_all, dissim_all] = get_training_data(all_data, ref_tap)
+    [y_train_all, dissim_train_all] = get_training_data(all_data, ref_tap)
 
     # print(len(y_train_all))
     # print(y_train_all[0].shape)
-    # print(len(dissim_all))
-    # print(dissim_all[0].shape)
-    x_real = -np.arange(-10,11)
-    show_dissim_profile(x_real,dissim_all)
+    # print(len(dissim))
+    # print(dissim[0].shape)
+    disp_real = [-np.arange(-10, 11)]
+    #show_dissim_profile(disp_real, dissim_train_all) #todo investigate disparity between matlab and python dissims!
 
-    #TODO calcultate line shift based of dissimilarity
+    # TODO calcultate line shifts based of dissimilarity
+    align_all_xs_via_dissim(disp_real, dissim_train_all)
+    gplvm.gp_lvm_max_lik()
