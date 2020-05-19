@@ -28,13 +28,15 @@ def load_data():
 
 def best_frame(all_frames):
     """
-    For the given tap, select frame with the highest average pin displacement from the first frame.
-    Takes in one tap, in form (16ish x 126 ish x 2) np.array, returns (1 x 126ish x 2) np.array
+    For the given tap, select frame with the highest average pin displacement
+    from the first frame. Takes in one tap, in form (16ish x 126 ish x 2)
+    np.array, returns (1 x 126ish x 2) np.array
     """
     # make into pin displacement instead of absolute position
     all_frames_disp = all_frames - all_frames[0]
 
-    # Find frame where largest pin displacement takes place (on average) #TODO this method is not the same as in MATLAB!
+    # Find frame where largest pin displacement takes place (on average)
+    # #TODO this method is not the same as in MATLAB!
     # Average disps per frame (over all pins)
     mean_disp_per_frame = np.mean(np.abs(all_frames_disp), axis=1)
 
@@ -53,7 +55,7 @@ def best_frame(all_frames):
 def get_training_data(all_data, ref_tap):
     """Return two lists both the same length as number of training angles """
 
-    sigma_n_diss = 5
+
     i_training_angles = [10 - 1, 15 - 1, 19 - 1, 5 - 1, 1 - 1]
 
     y_train_all = []
@@ -170,22 +172,30 @@ def show_dissim_profile(disp, dissim):
     ax.axvline(x=0, color='k')
     plt.ylabel('dissim')
     plt.xlabel('disp')
-    plt.show()
+    # plt.ioff()
+    # plt.show(block=False)
+    # plt.show()
 
 def align_all_xs_via_dissim(disp, dissim):
-    #for loop
+    #todo for loop
     #align each radius
     align_radius(disp[0], dissim[0])
     #return list
     pass
 
 def align_radius(disp, dissim):
-    start_params = [0, 0, 0]
-    data = [disp, dissim]
-    minimizer_kwargs = {"args": data}
-    result = scipy.optimize.basinhopping(gp.max_log_like, start_params, minimizer_kwargs=minimizer_kwargs)
-    print("done")
-    print(result)
+    sigma_n_diss = 5
+    start_params = [10.0, 1.0]  # sigma_f and L respectively
+    data = [disp, dissim, sigma_n_diss]
+    # minimizer_kwargs = {"args": data}
+    result = scipy.optimize.minimize(gp.max_log_like, start_params, args=data, method='BFGS')
+    # print(result)
+
+    [sigma_f, L] = result.x
+
+    disp_stars, dissim_stars = gp.interpolate(disp, dissim, sigma_f, L, sigma_n_diss)
+    show_dissim_profile([disp_stars], [dissim_stars])
+
 
 if __name__ == "__main__":
     all_data = load_data()
@@ -201,9 +211,11 @@ if __name__ == "__main__":
     # print(y_train_all[0].shape)
     # print(len(dissim))
     # print(dissim[0].shape)
-    disp_real = [-np.arange(-10, 11)]
-    #show_dissim_profile(disp_real, dissim_train_all) #todo investigate disparity between matlab and python dissims!
+    disp_real = [-np.arange(-10, 11, dtype=np.float)]
+    show_dissim_profile(disp_real, dissim_train_all) #todo investigate disparity between matlab and python dissims!
 
     # TODO calcultate line shifts based of dissimilarity
     align_all_xs_via_dissim(disp_real, dissim_train_all)
-    gplvm.gp_lvm_max_lik()
+    # gplvm.gp_lvm_max_lik()
+
+    plt.show()
