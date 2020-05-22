@@ -52,11 +52,8 @@ def best_frame(all_frames):
     return tap.reshape(tap.shape[0] * tap.shape[1])
 
 
-def get_training_data(all_data, ref_tap):
+def get_training_data(all_data, ref_tap, i_training_angles):
     """Return two lists both the same length as number of training angles """
-
-
-    i_training_angles = [10 - 1, 15 - 1, 19 - 1, 5 - 1, 1 - 1]
 
     y_train_all = []
     dissim_all = []
@@ -162,11 +159,12 @@ def show_dissim_profile(disp, dissim):
     for i in range(0, len(dissim)):
         # print(len(disp))
         if len(disp) == 1:
-            plt.plot(disp[0], dissim[i])
+            plt.plot(disp[0], dissim[i], marker='x')
         elif len(disp) == len(dissim):
-            plt.plot(disp[i], dissim[i])
+            plt.plot(disp[i], dissim[i], marker='x')
         else:
             raise NameError('disp not correct length for plotting')
+    plt.xticks(np.arange(np.amin(disp[0]), np.amax(disp[0]) +2 ,2))
     ax = plt.gca()
     ax.axhline(y=0, color='k')
     ax.axvline(x=0, color='k')
@@ -178,24 +176,74 @@ def show_dissim_profile(disp, dissim):
 
 def align_all_xs_via_dissim(disp, dissim):
     #todo for loop
-    #align each radius
-    align_radius(disp[0], dissim[0])
-    #return list
-    pass
+    corrected_disps = [None] * len(dissim)
+    for i in range(0, len(dissim)):
+        corrected_disps[i] = align_radius(disp[0], dissim[i])
 
-def align_radius(disp, dissim):
-    sigma_n_diss = 5
-    start_params = [10.0, 1.0]  # sigma_f and L respectively
-    data = [disp, dissim, sigma_n_diss]
-    # minimizer_kwargs = {"args": data}
-    result = scipy.optimize.minimize(gp.max_log_like, start_params, args=data, method='BFGS')
-    # print(result)
+    return corrected_disps
 
-    [sigma_f, L] = result.x
+def align_radius(disp, dissim, gp_extrap=False):
+    if gp_extrap:
+        sigma_n_diss = 5
+        start_params = [15.0, 15.0]  # sigma_f and L respectively
+        data = [disp, dissim, sigma_n_diss]
+        # minimizer_kwargs = {"args": data}
+        result = scipy.optimize.minimize(gp.max_log_like, start_params, args=data, method='BFGS')
+        # print(result)
 
-    disp_stars, dissim_stars = gp.interpolate(disp, dissim, sigma_f, L, sigma_n_diss)
-    show_dissim_profile([disp_stars], [dissim_stars])
+        [sigma_f, L] = result.x
 
+        disp_stars, dissim_stars = gp.interpolate(disp, dissim, sigma_f, L, sigma_n_diss)
+
+        show_dissim_profile([disp_stars], [dissim_stars])
+
+        #return shift
+    else:
+        result = np.where(dissim == np.amin(dissim))
+        # print(result[0][0])
+        disp_offset = disp[result[0][0]]
+        # print(disp_offset)
+
+    corrected_disp = disp - disp_offset  #TODO data is backwards, this maybe need to be +ve for online stuff
+
+    # print(corrected_disp)
+
+    return corrected_disp
+
+
+def add_mus(disps, mu_limits=[-1, 1], line_ordering=None):
+    """
+    Disps must be a list, with each entry containing a np.array of
+    displacement values (i.e. an entry per line)
+    """
+    # print(disps)
+
+    n_disp_lines = len(disps)
+
+    # [np.empty(disps[0].shape)] * len(disps)
+    x = np.empty((n_disp_lines, disps[0].shape[0], 2))
+
+    mu_for_line = np.linspace(mu_limits[0], mu_limits[1], n_disp_lines)
+    print(mu_for_line)
+
+    for i, disp in enumerate(disps):
+        if line_ordering is not None:
+            if len(line_ordering) != n_disp_lines:
+                raise NameError("line_ordering has different length to disps")
+            print(line_ordering[i])
+            mus = np.full(disp.shape, mu_for_line[line_ordering[i]])
+        else:
+            mus = np.full(disp.shape, mu_for_line[i])
+        # print(mus)
+        # print(type(mus))
+
+        an_x = np.vstack((disp, mus))
+        # print(an_x)
+
+        x[i] = an_x.T  #todo is this ok, or should np.copy be used for assignment?
+
+    print(x)
+    print(x.shape)
 
 if __name__ == "__main__":
     all_data = load_data()
@@ -204,18 +252,28 @@ if __name__ == "__main__":
     ref_tap = best_frame(all_data[10 - 1][11 - 1])  # -1 to translate properly from matlab
     # print(ref_tap)
     # print((ref_tap.shape))
-
-    [y_train_all, dissim_train_all] = get_training_data(all_data, ref_tap)
-
+    i_training_angles = [10 - 1, 15 - 1, 19 - 1, 5 - 1, 1 - 1]  #copied from MATLAB
+    [y_train_all, dissim_train_all] = get_training_data(all_data, ref_tap, i_training_angles)
+    # with np.printoptions(precision=3, suppress=True):
+    #     print(dissim_train_all)
     # print(len(y_train_all))
     # print(y_train_all[0].shape)
     # print(len(dissim))
     # print(dissim[0].shape)
     disp_real = [-np.arange(-10, 11, dtype=np.float)]
-    show_dissim_profile(disp_real, dissim_train_all) #todo investigate disparity between matlab and python dissims!
+    show_dissim_profile(disp_real, dissim_train_all)
 
-    # TODO calcultate line shifts based of dissimilarity
-    align_all_xs_via_dissim(disp_real, dissim_train_all)
+    # calculate line shifts based off dissimilarity
+    disp_train_all = align_all_xs_via_dissim(disp_real, dissim_train_all)
+    # print(len(disp_train_all))
+    show_dissim_profile(disp_train_all, dissim_train_all)
     # gplvm.gp_lvm_max_lik()
 
-    plt.show()
+    # plt.show()  # needs to be at end or graphs will block everything/disappear
+
+    #TODO optimize gp-lvm hyperparams
+    print(np.argsort(i_training_angles))
+    x_train_all = add_mus(disp_train_all, line_ordering=np.argsort(np.argsort(i_training_angles)))
+
+    model = gplvm.GPLVM(x_train_all, y_train_all)
+    # model.optim_hyperpars(x_train_all, y_train_all)

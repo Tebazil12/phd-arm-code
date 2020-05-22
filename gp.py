@@ -144,6 +144,6 @@ def interpolate(x,y,sigma_f, L,sigma_n, x_limits=None, x_step=0.1):
         # raise(stop)
 
         # k_star_star = calc_covariance(x_star, x_star, sigma_f, L)
-    with np.printoptions(precision=3, suppress=True):
-        print(y_stars)
+    # with np.printoptions(precision=3, suppress=True):
+    #     print(y_stars)
     return x_stars, y_stars
