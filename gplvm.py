@@ -5,27 +5,22 @@ import gp
 class GPLVM:
     sigma_n_y = 1.14  #TODO this is for the normal tactip, needs setting for others!
 
-    def __init__(self, x, y, sigma_f=None, l=None):
+    def __init__(self, x, y, sigma_f=None, ls=None):
         """
-        Take in x and y as lists
+        Take in x and y as np.arrays of the correct size and shape to be used
         """
+        self.x = x
+        self.y = y
 
-        x = np.array(x)
-        print(x.shape)
-        self.x = x.reshape(x.shape[0] * x.shape[1], x.shape[2])
-
-        y = np.array(y)
-        self.y = y.reshape(y.shape[0] * y.shape[1], y.shape[2])
-
-        print(x.shape)
-        print(y.shape)
-        if sigma_f is None or l is None:
+        # print(y.shape)
+        # print(x.shape)
+        if sigma_f is None or ls is None:
             #optmise
             self.optim_hyperpars()
         else:
             # assuming hyperpars already optimised
             self.sigma_f = sigma_f
-            self.l = l
+            self.ls = ls
 
     def max_log_like(self, hyper_pars, data):
         sigma_f, l_disp, l_mu = hyper_pars
@@ -36,6 +31,9 @@ class GPLVM:
 
         s_cap = (1 / d_cap) * (y @ y.conj().T)
 
+        # if not np.isscalar(s_cap):
+        #     raise NameError("s_cap is not scalar!")
+
         ls = np.array([l_disp, l_mu]) # TODO confirm 2 ls works with calc_K
 
         k_cap = gp.calc_K(x, sigma_f, ls, self.sigma_n_y)
@@ -45,9 +43,15 @@ class GPLVM:
 
         part_1 = - (d_cap * n_cap) * 0.5 * np.log(2 * np.pi)
         part_2 = - d_cap * 0.5 * logdet_K
-        part_3 = - d_cap * 0.5 * np.trace(np.linalg.inv(k_cap) * s_cap)
+
+        # print("Here")
+        # print(d_cap)
+        # print(s_cap)
+        # print(np.trace(np.linalg.inv(k_cap)))
+        part_3 = - d_cap * 0.5 * np.trace(np.linalg.inv(k_cap) @ s_cap)
 
         neg_val = part_1 + part_2 + part_3
+        # print(neg_val)
         return -neg_val  # because trying to find max with a min search
 
     def optim_hyperpars(self, x=None, y=None, start_hyperpars=None, update_data=False):
@@ -61,10 +65,16 @@ class GPLVM:
 
         data = [x, y]
         # minimizer_kwargs = {"args": data}
-        result = scipy.optimize.minimize(self.max_log_like, start_hyperpars,
-                                         args=data, method='BFGS')
+        result = scipy.optimize.minimize(
+            self.max_log_like,
+            start_hyperpars,
+            args=data,
+            method='BFGS',
+            options={'gtol': 0.01,'maxiter': 300}  # is this the best number?
+        )
         # print(result)
 
         [sigma_f, l_disp, l_mu] = result.x
-        print(result)
-        raise (stop)
+        self.sigma_f = sigma_f
+        self.ls = [l_disp, l_mu]
+        # print(result)

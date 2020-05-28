@@ -13,43 +13,43 @@ clear all
 % y will be normalized tap at max disp (raw data minus first frame, max
 % disps of those, diff with reference tap).
 
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c01_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c01_01.mat')
 all_data{1}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c02_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c02_01.mat')
 all_data{2}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c03_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c03_01.mat')
 all_data{3}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c04_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c04_01.mat')
 all_data{4}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c05_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c05_01.mat')
 all_data{5}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c06_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c06_01.mat')
 all_data{6}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c07_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c07_01.mat')
 all_data{7}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c08_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c08_01.mat')
 all_data{8}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c09_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c09_01.mat')
 all_data{9}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c10_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c10_01.mat')
 all_data{10}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c11_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c11_01.mat')
 all_data{11}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c12_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c12_01.mat')
 all_data{12}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c13_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c13_01.mat')
 all_data{13}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c14_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c14_01.mat')
 all_data{14}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c15_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c15_01.mat')
 all_data{15}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c16_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c16_01.mat')
 all_data{16}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c17_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c17_01.mat')
 all_data{17}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c18_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c18_01.mat')
 all_data{18}= fliplr(data);
-load('/home/lizzie/OneDrive/data/singleRadius2019-01-16_1651/c19_01.mat')
+load('C:\Users\ea-stone\Documents\data\singleRadius2019-01-16_1651\c19_01.mat')
 all_data{19}= fliplr(data);
 max_num = 19;
 
@@ -364,7 +364,7 @@ function [dissims, y_for_real, x_diffs, y_diffs] = process_taps(radii_data, ref_
         end
 
         average_max_i = round(mean([max_i(1,:)  max_i(2,:)],2)); % want to compare same frame across tap, not different frames for each pin
-
+        
         differences = ref_diffs_norm(ref_diffs_norm_max_ind ,:  ,:) ...
                       - current_tap_data_norm(average_max_i,:,:); 
 %         differences = current_tap_data_norm(average_max_i,:,:) - ref_diffs_norm(ref_diffs_norm_max_ind ,:  ,:);
@@ -382,12 +382,13 @@ function [dissims, y_for_real, x_diffs, y_diffs] = process_taps(radii_data, ref_
         else
             error("Y not chosen")
         end
-%         diss = norm([differences(:,:,1)'; differences(:,:,2)']);
+        [differences(:,:,1)'; differences(:,:,2)']
+         diss = norm([differences(:,:,1)'; differences(:,:,2)']);
 %         diss = pdist2(differences(:,:,1),differences(:,:,2), 'euclidean');
 %         diss = pdist2(ref_diffs_norm(ref_diffs_norm_max_ind ,:  ,:),...
 %                 current_tap_data_norm(average_max_i,:,:), 'cosine');
 %         diss = pdist2(zeros(1,size(differences(:,:,2),2)*2), [differences(:,:,1), differences(:,:,2)], 'euclidean');
-        diss = pdist2([ref_diffs_norm(ref_diffs_norm_max_ind ,:  ,1) ref_diffs_norm(ref_diffs_norm_max_ind ,:  ,2)], [current_tap_data_norm(average_max_i,:,1), current_tap_data_norm(average_max_i,:,2)], 'cosine');
+       % diss = pdist2([ref_diffs_norm(ref_diffs_norm_max_ind ,:  ,1) ref_diffs_norm(ref_diffs_norm_max_ind ,:  ,2)], [current_tap_data_norm(average_max_i,:,1), current_tap_data_norm(average_max_i,:,2)], 'cosine');
         
         if isnan(diss)
             diss=0;
@@ -409,9 +410,9 @@ function x_min  = radius_diss_shift(dissims, x_matrix, sigma_n, TRAIN_MIN_DISP)
 % and gp estimates for reference.
 
     % Get gp for this specific radius
-    [par, fval, flag] = fminunc(@(mypar)gp_max_log_like(mypar(1), mypar(2), sigma_n,...
+    [par, fval, flag,output] = fminunc(@(mypar)gp_max_log_like(mypar(1), mypar(2), sigma_n,...
                                                         dissims' , x_matrix(:,1)),...
-                                [10 1] ,optimoptions('fminunc','Display','off'));
+                                [10 1] ,optimoptions('fminunc'));%,'Display','off'));
     
     sigma_f = par(1);
     l = par(2);

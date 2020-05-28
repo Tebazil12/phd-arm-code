@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import gplvm
 import gp
 
+
 def load_data():
     n_angles = 19
     all_data = [None] * n_angles  # all_data[angle][disp][frame][pin][xory]
@@ -52,26 +53,37 @@ def best_frame(all_frames):
     return tap.reshape(tap.shape[0] * tap.shape[1])
 
 
-def get_training_data(all_data, ref_tap, i_training_angles):
-    """Return two lists both the same length as number of training angles """
+def get_processed_data(all_data, ref_tap, indexes=None):
+    """
+    Return two lists both the same length as number of training angles. Takes
+    all_data as lists of np.arrays)
+    """
 
-    y_train_all = []
-    dissim_all = []
-    for i_angle in range(0, len(i_training_angles)):
-        y_train_line = extract_ytrain(all_data[i_training_angles[i_angle]])
+    y_processed = []
+    dissim_processed = []
+
+    if indexes is None:
+        i_angles = range(0, len(all_data))
+    else:
+        i_angles = range(0, len(indexes))
+
+
+    for i_angle in i_angles:
+        y_train_line = extract_ytrain(all_data[indexes[i_angle]])
         dissim_line = calc_dissims(y_train_line, ref_tap)
 
-        y_train_all.append(y_train_line)
-        dissim_all.append(dissim_line)
+        y_processed.append(y_train_line)
+        dissim_processed.append(dissim_line)
 
-    return [y_train_all, dissim_all]
+    return [y_processed, dissim_processed]
 
 
 def extract_ytrain(radii_data):
     """ Extract ytrain given radii_data[disp][frame][pin][xory] """
 
     # shape for the radius data to be returned (note this is 2d, not 3d)
-    data_shape = (radii_data.shape[0], (radii_data[0][0].shape[0] * radii_data[0][0].shape[1]))
+    data_shape = (radii_data.shape[0],
+                  (radii_data[0][0].shape[0] * radii_data[0][0].shape[1]))
     y_train = np.zeros(shape=data_shape)
 
     for disp_num in range(0, len(radii_data)):  # for each tap on radius
@@ -88,13 +100,13 @@ def calc_dissims(y_train, ref_tap):
     # print(diffs.shape)
 
     # reshape to 21 by 126 by 2?
-    diffs_3d = diffs.reshape(diffs.shape[0], int(diffs.shape[1]/2), 2)
+    diffs_3d = diffs.reshape(diffs.shape[0], int(diffs.shape[1] / 2), 2)
     # print(diffs_3d.shape)
 
-    y_train_2d = y_train.reshape(y_train.shape[0], int(y_train.shape[1]/2), 2)
+    y_train_2d = y_train.reshape(y_train.shape[0], int(y_train.shape[1] / 2), 2)
     ref_tap_2d = ref_tap.reshape(int(ref_tap.shape[0] / 2), 2)
 
-    sum_diffs = diffs_3d.sum(1) #sum in x and y
+    sum_diffs = diffs_3d.sum(1)  # sum in x and y
     # print(sum_diffs)
     # print(sum_diffs.shape)
 
@@ -107,8 +119,7 @@ def calc_dissims(y_train, ref_tap):
     # print(y_train.shape)
     # print(sum_ref)
 
-    #TODO recreate matlab ordering of array(to see if this is causing the disparity):
-
+    # TODO recreate matlab ordering of array(to see if this is causing the disparity):
 
     # Calculate Euclidean distance as dissimilarity measure
     # dissim = np.linalg.norm(sum_diffs,axis=1)
@@ -131,11 +142,12 @@ def calc_dissims(y_train, ref_tap):
     # print(dissim[0])
     # print(dissim.shape)
 
-    #todo this one works well
-    dissim = scipy.spatial.distance.cdist([ref_tap], y_train, 'euclidean') # NOTsame as above 2 methods
+    # todo this one works well
+    dissim = scipy.spatial.distance.cdist([ref_tap], y_train,
+                                          'euclidean')  # NOTsame as above 2 methods
     # print(diffs.shape)
 
-    #trying to replicate matlabs worse values
+    # trying to replicate matlabs worse values
     # dissim = scipy.spatial.distance.cdist(np.empty(diffs.shape), diffs, 'euclidean')
     # print("dissim sums")
     # print(dissim)
@@ -150,7 +162,7 @@ def calc_dissims(y_train, ref_tap):
     # print(dissim.shape)
     # print(dissim_degs)
 
-    return dissim[0] # so that not array within array...
+    return dissim[0]  # so that not array within array...
 
 
 def show_dissim_profile(disp, dissim):
@@ -164,7 +176,7 @@ def show_dissim_profile(disp, dissim):
             plt.plot(disp[i], dissim[i], marker='x')
         else:
             raise NameError('disp not correct length for plotting')
-    plt.xticks(np.arange(np.amin(disp[0]), np.amax(disp[0]) +2 ,2))
+    plt.xticks(np.arange(np.amin(disp[0]), np.amax(disp[0]) + 2, 2))
     ax = plt.gca()
     ax.axhline(y=0, color='k')
     ax.axvline(x=0, color='k')
@@ -174,13 +186,15 @@ def show_dissim_profile(disp, dissim):
     # plt.show(block=False)
     # plt.show()
 
+
 def align_all_xs_via_dissim(disp, dissim):
-    #todo for loop
+    # todo for loop
     corrected_disps = [None] * len(dissim)
     for i in range(0, len(dissim)):
         corrected_disps[i] = align_radius(disp[0], dissim[i])
 
     return corrected_disps
+
 
 def align_radius(disp, dissim, gp_extrap=False):
     if gp_extrap:
@@ -188,23 +202,25 @@ def align_radius(disp, dissim, gp_extrap=False):
         start_params = [15.0, 15.0]  # sigma_f and L respectively
         data = [disp, dissim, sigma_n_diss]
         # minimizer_kwargs = {"args": data}
-        result = scipy.optimize.minimize(gp.max_log_like, start_params, args=data, method='BFGS')
+        result = scipy.optimize.minimize(gp.max_log_like, start_params,
+                                         args=data, method='BFGS')
         # print(result)
 
         [sigma_f, L] = result.x
 
-        disp_stars, dissim_stars = gp.interpolate(disp, dissim, sigma_f, L, sigma_n_diss)
+        disp_stars, dissim_stars = gp.interpolate(disp, dissim, sigma_f, L,
+                                                  sigma_n_diss)
 
         show_dissim_profile([disp_stars], [dissim_stars])
 
-        #return shift
+        # return shift
     else:
         result = np.where(dissim == np.amin(dissim))
         # print(result[0][0])
         disp_offset = disp[result[0][0]]
         # print(disp_offset)
 
-    corrected_disp = disp - disp_offset  #TODO data is backwards, this maybe need to be +ve for online stuff
+    corrected_disp = disp - disp_offset  # TODO data is backwards, this maybe need to be +ve for online stuff
 
     # print(corrected_disp)
 
@@ -240,20 +256,30 @@ def add_mus(disps, mu_limits=[-1, 1], line_ordering=None):
         an_x = np.vstack((disp, mus))
         # print(an_x)
 
-        x[i] = an_x.T  #todo is this ok, or should np.copy be used for assignment?
+        x[i] = an_x.T  # todo is this ok, or should np.copy be used for assignment?
 
-    print(x)
-    print(x.shape)
+    # print(x)
+    # print(x.shape)
+    return x
+
 
 if __name__ == "__main__":
     all_data = load_data()
     # print(len(all_data[0]))
 
-    ref_tap = best_frame(all_data[10 - 1][11 - 1])  # -1 to translate properly from matlab
+    ref_tap = best_frame(
+        all_data[10 - 1][11 - 1])  # -1 to translate properly from matlab
     # print(ref_tap)
     # print((ref_tap.shape))
-    i_training_angles = [10 - 1, 15 - 1, 19 - 1, 5 - 1, 1 - 1]  #copied from MATLAB
-    [y_train_all, dissim_train_all] = get_training_data(all_data, ref_tap, i_training_angles)
+
+    # indexes copied from MATLAB, hence -1 for easy comparison
+    i_training_angles = [10 - 1, 15 - 1, 19 - 1, 5 - 1, 1 - 1]
+    [y_train_all, dissim_train_all] = get_processed_data(
+        all_data,
+        ref_tap,
+        indexes=i_training_angles
+    )
+
     # with np.printoptions(precision=3, suppress=True):
     #     print(dissim_train_all)
     # print(len(y_train_all))
@@ -263,7 +289,9 @@ if __name__ == "__main__":
     disp_real = [-np.arange(-10, 11, dtype=np.float)]
     show_dissim_profile(disp_real, dissim_train_all)
 
-    # calculate line shifts based off dissimilarity
+    # calculate line shifts based off dissimilarity (EXCEPT HERE WE ARENT
+    # USING GP TO PREDICT SMOOTH PROFILE, GP IS PROBABLY NOT IMPLEMENTED
+    # CORRECTLY! Use flag to use gp smoothing)
     disp_train_all = align_all_xs_via_dissim(disp_real, dissim_train_all)
     # print(len(disp_train_all))
     show_dissim_profile(disp_train_all, dissim_train_all)
@@ -271,9 +299,31 @@ if __name__ == "__main__":
 
     # plt.show()  # needs to be at end or graphs will block everything/disappear
 
-    #TODO optimize gp-lvm hyperparams
+    # TODO optimize gp-lvm hyperparams
     print(np.argsort(i_training_angles))
-    x_train_all = add_mus(disp_train_all, line_ordering=np.argsort(np.argsort(i_training_angles)))
 
-    model = gplvm.GPLVM(x_train_all, y_train_all)
-    # model.optim_hyperpars(x_train_all, y_train_all)
+    # need double arg sort to get index of sorted order
+    x_train_all = add_mus(
+        disp_train_all,
+        line_ordering=np.argsort(np.argsort(i_training_angles)),
+        mu_limits=[-2, 2]  # to match offline in matlab
+    )
+    x_train_all = x_train_all.reshape(
+        x_train_all.shape[0] * x_train_all.shape[1], x_train_all.shape[2])
+
+
+    # reshape to be in correct format for GPLVM calcs
+    y_train_all = np.array(y_train_all)
+    y_train_all = y_train_all.reshape(y_train_all.shape[0] * y_train_all.shape[1], y_train_all.shape[2])
+
+    model = gplvm.GPLVM(x_train_all, y_train_all) #init includes hyperpar optm.
+    print(vars(model)) # this actually only prints object number/mem address/thing
+
+    # here matlab attempts to show pattern of taps using GP, to see if
+    # predictions are sensible, but that is probably too much effort for
+    # now (and the results weren't intelligible in matlab)
+
+    # Test the GP-LVM optimisation
+
+
+
