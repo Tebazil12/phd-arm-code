@@ -1,10 +1,12 @@
 import load_json
 import numpy as np
 
+
 def test_whatever():
     all_data = load_json.load_data()
     ref_diffs_norm = load_json.whatever(all_data)
     assert ref_diffs_norm is not None
+
 
 def test_load_data():
     all_data = load_json.load_data()

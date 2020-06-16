@@ -8,7 +8,7 @@ def max_log_like(hyper_pars, data):
     k_cap = calc_K(x, sigma_f, L, sigma_n)
 
     # with np.printoptions(precision=3, suppress=True):
-        # print(k_cap)
+    # print(k_cap)
     # print("########################################")
 
     r_cap = np.linalg.cholesky(k_cap)
@@ -18,7 +18,11 @@ def max_log_like(hyper_pars, data):
     alpha = np.linalg.solve(r_cap, np.linalg.solve(r_cap.conj().T, y))
 
     # todo check its doing matrix mult. not element wise mult
-    mll = (0.5 * (y.conj().T @ alpha)) + 0.5*logdet_K + 0.5*k_cap.shape[0]*np.log(2 * np.pi)
+    mll = (
+        (0.5 * (y.conj().T @ alpha))
+        + 0.5 * logdet_K
+        + 0.5 * k_cap.shape[0] * np.log(2 * np.pi)
+    )
 
     # print(mll)
     # raise(stop)
@@ -55,7 +59,7 @@ def cal_K_star(x, x_star, sigma_f, L, sigma_n):
 
     k_cap_star = np.empty(x.shape)
 
-    for i in range(0,len(k_cap_star)):
+    for i in range(0, len(k_cap_star)):
         k_cap_star[i] = calc_covariance(x_star, x[i], sigma_f, L)
 
     if np.isnan(k_cap_star).any():
@@ -65,27 +69,28 @@ def cal_K_star(x, x_star, sigma_f, L, sigma_n):
     #     print(k_cap_star)
     return k_cap_star
 
+
 def calc_covariance(x, x_prime, sigma_f, L):
     if not np.isscalar(sigma_f):
         raise NameError("sigma_f must be a scalar, not a matrix")
 
-    #todo check shape of x and x_prime
+    # todo check shape of x and x_prime
 
     # print("start of cal cov")
     # print(x,x_prime,sigma_f,L)
 
     x_diff = x - x_prime
     # print(x_diff)
-    x_diff_sqr = np.asarray(x_diff**2) # asarray as can be both scalar or array
+    x_diff_sqr = np.asarray(x_diff ** 2)  # asarray as can be both scalar or array
 
     x_sqr_l_sqr = np.asarray(np.nan_to_num(x_diff_sqr / (2 * (L ** 2))))
-    x_sqr_l_sqr[x_sqr_l_sqr == np.inf] = 0 # remove infs
+    x_sqr_l_sqr[x_sqr_l_sqr == np.inf] = 0  # remove infs
 
     sum_of_sqrs = np.sum(x_sqr_l_sqr)
 
     exp_sum_sqr = np.exp(-sum_of_sqrs)
 
-    k = exp_sum_sqr * (sigma_f**2)
+    k = exp_sum_sqr * (sigma_f ** 2)
 
     if np.isnan(k) or np.isinf(k):
         raise NameError("k contains not a number (has nan or inf)")
@@ -96,7 +101,7 @@ def calc_covariance(x, x_prime, sigma_f, L):
     return k
 
 
-def interpolate(x,y,sigma_f, L,sigma_n, x_limits=None, x_step=0.1):
+def interpolate(x, y, sigma_f, L, sigma_n, x_limits=None, x_step=0.1):
     """
     Given example data, x and y, and (optimised) hyperparameters, use a gp
     to interpolate y at a range of x's between the x_limits (both inclusive).
@@ -138,7 +143,6 @@ def interpolate(x,y,sigma_f, L,sigma_n, x_limits=None, x_step=0.1):
         # print("K* x inv(K) x y_appostrophe ")
         ks_by_yt = k_cap_star @ inv_K @ y_con_t  # the @ means matrix mult.
         # print(ks_by_yt.shape)
-
 
         y_stars[i] = ks_by_yt
         # raise(stop)

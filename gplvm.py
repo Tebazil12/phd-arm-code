@@ -2,8 +2,9 @@ import scipy.optimize
 import numpy as np
 import gp
 
+
 class GPLVM:
-    sigma_n_y = 1.14  #TODO this is for the normal tactip, needs setting for others!
+    sigma_n_y = 1.14  # TODO this is for the normal tactip, needs setting for others!
 
     def __init__(self, x, y, sigma_f=None, ls=None):
         """
@@ -15,7 +16,7 @@ class GPLVM:
         # print(y.shape)
         # print(x.shape)
         if sigma_f is None or ls is None:
-            #optmise
+            # optmise
             self.optim_hyperpars()
         else:
             # assuming hyperpars already optimised
@@ -34,21 +35,21 @@ class GPLVM:
         # if not np.isscalar(s_cap):
         #     raise NameError("s_cap is not scalar!")
 
-        ls = np.array([l_disp, l_mu]) # TODO confirm 2 ls works with calc_K
+        ls = np.array([l_disp, l_mu])  # TODO confirm 2 ls works with calc_K
 
         k_cap = gp.calc_K(x, sigma_f, ls, self.sigma_n_y)
 
         r_cap = np.linalg.cholesky(k_cap)
         sign, logdet_K = np.linalg.slogdet(r_cap)
 
-        part_1 = - (d_cap * n_cap) * 0.5 * np.log(2 * np.pi)
-        part_2 = - d_cap * 0.5 * logdet_K
+        part_1 = -(d_cap * n_cap) * 0.5 * np.log(2 * np.pi)
+        part_2 = -d_cap * 0.5 * logdet_K
 
         # print("Here")
         # print(d_cap)
         # print(s_cap)
         # print(np.trace(np.linalg.inv(k_cap)))
-        part_3 = - d_cap * 0.5 * np.trace(np.linalg.inv(k_cap) @ s_cap)
+        part_3 = -d_cap * 0.5 * np.trace(np.linalg.inv(k_cap) @ s_cap)
 
         neg_val = part_1 + part_2 + part_3
         # print(neg_val)
@@ -61,7 +62,9 @@ class GPLVM:
             y = self.y
 
         if start_hyperpars is None:
-            start_hyperpars = np.array([1, 300, 5]) # sigma_f , L_disp, L_mu respectively
+            start_hyperpars = np.array(
+                [1, 300, 5]
+            )  # sigma_f , L_disp, L_mu respectively
 
         data = [x, y]
         # minimizer_kwargs = {"args": data}
@@ -69,8 +72,8 @@ class GPLVM:
             self.max_log_like,
             start_hyperpars,
             args=data,
-            method='BFGS',
-            options={'gtol': 0.01,'maxiter': 300}  # is this the best number?
+            method="BFGS",
+            options={"gtol": 0.01, "maxiter": 300},  # is this the best number?
         )
         # print(result)
 

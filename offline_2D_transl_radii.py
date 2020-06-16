@@ -15,13 +15,13 @@ def load_data():
 
     for i in range(0, n_angles):
         if i < 9:
-            file_name = 'c0' + str(i + 1) + '_01.mat'
+            file_name = "c0" + str(i + 1) + "_01.mat"
         else:
-            file_name = 'c' + str(i + 1) + '_01.mat'
+            file_name = "c" + str(i + 1) + "_01.mat"
 
         full_load_name = folder_path + file_name
         mat = scipy.io.loadmat(full_load_name)
-        all_data[i] = mat['data'][0]
+        all_data[i] = mat["data"][0]
         # all_data[i].round(2)
 
     return all_data
@@ -59,14 +59,13 @@ def get_processed_data(all_data, ref_tap, indexes=None):
     all_data as lists of np.arrays)
     """
 
-    y_processed = [] #TODO THIS METHOD OF ARRAY BUILDING IS NOT EFFICIENT
+    y_processed = []  # TODO THIS METHOD OF ARRAY BUILDING IS NOT EFFICIENT
     dissim_processed = []
 
     if indexes is None:
         i_angles = range(0, len(all_data))
     else:
         i_angles = range(0, len(indexes))
-
 
     for i_angle in i_angles:
         if indexes is not None:
@@ -86,8 +85,10 @@ def extract_ytrain(radii_data):
     """ Extract ytrain given radii_data[disp][frame][pin][xory] """
 
     # shape for the radius data to be returned (note this is 2d, not 3d)
-    data_shape = (radii_data.shape[0],
-                  (radii_data[0][0].shape[0] * radii_data[0][0].shape[1]))
+    data_shape = (
+        radii_data.shape[0],
+        (radii_data[0][0].shape[0] * radii_data[0][0].shape[1]),
+    )
     y_train = np.zeros(shape=data_shape)
 
     for disp_num in range(0, len(radii_data)):  # for each tap on radius
@@ -147,8 +148,9 @@ def calc_dissims(y_train, ref_tap):
     # print(dissim.shape)
 
     # todo this one works well
-    dissim = scipy.spatial.distance.cdist([ref_tap], y_train,
-                                          'euclidean')  # NOTsame as above 2 methods
+    dissim = scipy.spatial.distance.cdist(
+        [ref_tap], y_train, "euclidean"
+    )  # NOTsame as above 2 methods
     # print(diffs.shape)
 
     # trying to replicate matlabs worse values
@@ -175,17 +177,17 @@ def show_dissim_profile(disp, dissim):
     for i in range(0, len(dissim)):
         # print(len(disp))
         if len(disp) == 1:
-            plt.plot(disp[0], dissim[i], marker='x')
+            plt.plot(disp[0], dissim[i], marker="x")
         elif len(disp) == len(dissim):
-            plt.plot(disp[i], dissim[i], marker='x')
+            plt.plot(disp[i], dissim[i], marker="x")
         else:
-            raise NameError('disp not correct length for plotting')
+            raise NameError("disp not correct length for plotting")
     plt.xticks(np.arange(np.amin(disp[0]), np.amax(disp[0]) + 2, 2))
     ax = plt.gca()
-    ax.axhline(y=0, color='k')
-    ax.axvline(x=0, color='k')
-    plt.ylabel('dissim')
-    plt.xlabel('disp')
+    ax.axhline(y=0, color="k")
+    ax.axvline(x=0, color="k")
+    plt.ylabel("dissim")
+    plt.xlabel("disp")
     # plt.ioff()
     # plt.show(block=False)
     # plt.show()
@@ -206,14 +208,16 @@ def align_radius(disp, dissim, gp_extrap=False):
         start_params = [15.0, 15.0]  # sigma_f and L respectively
         data = [disp, dissim, sigma_n_diss]
         # minimizer_kwargs = {"args": data}
-        result = scipy.optimize.minimize(gp.max_log_like, start_params,
-                                         args=data, method='BFGS')
+        result = scipy.optimize.minimize(
+            gp.max_log_like, start_params, args=data, method="BFGS"
+        )
         # print(result)
 
         [sigma_f, L] = result.x
 
-        disp_stars, dissim_stars = gp.interpolate(disp, dissim, sigma_f, L,
-                                                  sigma_n_diss)
+        disp_stars, dissim_stars = gp.interpolate(
+            disp, dissim, sigma_f, L, sigma_n_diss
+        )
 
         show_dissim_profile([disp_stars], [dissim_stars])
 
@@ -224,7 +228,9 @@ def align_radius(disp, dissim, gp_extrap=False):
         disp_offset = disp[result[0][0]]
         # print(disp_offset)
 
-    corrected_disp = disp - disp_offset  # TODO data is backwards, this maybe need to be +ve for online stuff
+    corrected_disp = (
+        disp - disp_offset
+    )  # TODO data is backwards, this maybe need to be +ve for online stuff
 
     # print(corrected_disp)
 
@@ -272,16 +278,15 @@ if __name__ == "__main__":
     # print(len(all_data[0]))
 
     ref_tap = best_frame(
-        all_data[10 - 1][11 - 1])  # -1 to translate properly from matlab
+        all_data[10 - 1][11 - 1]
+    )  # -1 to translate properly from matlab
     # print(ref_tap)
     # print((ref_tap.shape))
 
     # indexes copied from MATLAB, hence -1 for easy comparison
     i_training_angles = [10 - 1, 15 - 1, 19 - 1, 5 - 1, 1 - 1]
     [y_train, dissim_train] = get_processed_data(
-        all_data,
-        ref_tap,
-        indexes=i_training_angles
+        all_data, ref_tap, indexes=i_training_angles
     )
 
     # with np.printoptions(precision=3, suppress=True):
@@ -310,18 +315,16 @@ if __name__ == "__main__":
     x_train = add_mus(
         disp_train,
         line_ordering=np.argsort(np.argsort(i_training_angles)),
-        mu_limits=[-2, 2]  # to match offline in matlab
+        mu_limits=[-2, 2],  # to match offline in matlab
     )
-    x_train = x_train.reshape(
-        x_train.shape[0] * x_train.shape[1], x_train.shape[2])
-
+    x_train = x_train.reshape(x_train.shape[0] * x_train.shape[1], x_train.shape[2])
 
     # reshape to be in correct format for GPLVM calcs
     y_train = np.array(y_train)
     y_train = y_train.reshape(y_train.shape[0] * y_train.shape[1], y_train.shape[2])
 
-    model = gplvm.GPLVM(x_train, y_train) #init includes hyperpar optm.
-    print(vars(model)) # matrices print rather long
+    model = gplvm.GPLVM(x_train, y_train)  # init includes hyperpar optm.
+    print(vars(model))  # matrices print rather long
 
     # here matlab attempts to show pattern of taps using GP, to see if
     # predictions are sensible, but that is probably too much effort for
@@ -330,8 +333,7 @@ if __name__ == "__main__":
     # Test the GP-LVM optimisation
     [y_test, dissim_test] = get_processed_data(all_data, ref_tap)
     y_test = np.array(y_test)
-    y_test = y_test.reshape(y_test.shape[0] * y_test.shape[1],
-                              y_test.shape[2])
+    y_test = y_test.reshape(y_test.shape[0] * y_test.shape[1], y_test.shape[2])
 
     # calculate line shifts based off dissimilarity (EXCEPT HERE WE ARENT
     # USING GP TO PREDICT SMOOTH PROFILE, GP IS PROBABLY NOT IMPLEMENTED
