@@ -59,7 +59,7 @@ def get_processed_data(all_data, ref_tap, indexes=None):
     all_data as lists of np.arrays)
     """
 
-    y_processed = []
+    y_processed = [] #TODO THIS METHOD OF ARRAY BUILDING IS NOT EFFICIENT
     dissim_processed = []
 
     if indexes is None:
@@ -69,7 +69,11 @@ def get_processed_data(all_data, ref_tap, indexes=None):
 
 
     for i_angle in i_angles:
-        y_train_line = extract_ytrain(all_data[indexes[i_angle]])
+        if indexes is not None:
+            y_train_line = extract_ytrain(all_data[indexes[i_angle]])
+        else:
+            y_train_line = extract_ytrain(all_data[i_angle])
+
         dissim_line = calc_dissims(y_train_line, ref_tap)
 
         y_processed.append(y_train_line)
@@ -274,27 +278,27 @@ if __name__ == "__main__":
 
     # indexes copied from MATLAB, hence -1 for easy comparison
     i_training_angles = [10 - 1, 15 - 1, 19 - 1, 5 - 1, 1 - 1]
-    [y_train_all, dissim_train_all] = get_processed_data(
+    [y_train, dissim_train] = get_processed_data(
         all_data,
         ref_tap,
         indexes=i_training_angles
     )
 
     # with np.printoptions(precision=3, suppress=True):
-    #     print(dissim_train_all)
-    # print(len(y_train_all))
-    # print(y_train_all[0].shape)
+    #     print(dissim_train)
+    # print(len(y_train))
+    # print(y_train[0].shape)
     # print(len(dissim))
     # print(dissim[0].shape)
     disp_real = [-np.arange(-10, 11, dtype=np.float)]
-    show_dissim_profile(disp_real, dissim_train_all)
+    show_dissim_profile(disp_real, dissim_train)
 
     # calculate line shifts based off dissimilarity (EXCEPT HERE WE ARENT
     # USING GP TO PREDICT SMOOTH PROFILE, GP IS PROBABLY NOT IMPLEMENTED
     # CORRECTLY! Use flag to use gp smoothing)
-    disp_train_all = align_all_xs_via_dissim(disp_real, dissim_train_all)
-    # print(len(disp_train_all))
-    show_dissim_profile(disp_train_all, dissim_train_all)
+    disp_train = align_all_xs_via_dissim(disp_real, dissim_train)
+    # print(len(disp_train))
+    show_dissim_profile(disp_train, dissim_train)
     # gplvm.gp_lvm_max_lik()
 
     # plt.show()  # needs to be at end or graphs will block everything/disappear
@@ -303,27 +307,33 @@ if __name__ == "__main__":
     print(np.argsort(i_training_angles))
 
     # need double arg sort to get index of sorted order
-    x_train_all = add_mus(
-        disp_train_all,
+    x_train = add_mus(
+        disp_train,
         line_ordering=np.argsort(np.argsort(i_training_angles)),
         mu_limits=[-2, 2]  # to match offline in matlab
     )
-    x_train_all = x_train_all.reshape(
-        x_train_all.shape[0] * x_train_all.shape[1], x_train_all.shape[2])
+    x_train = x_train.reshape(
+        x_train.shape[0] * x_train.shape[1], x_train.shape[2])
 
 
     # reshape to be in correct format for GPLVM calcs
-    y_train_all = np.array(y_train_all)
-    y_train_all = y_train_all.reshape(y_train_all.shape[0] * y_train_all.shape[1], y_train_all.shape[2])
+    y_train = np.array(y_train)
+    y_train = y_train.reshape(y_train.shape[0] * y_train.shape[1], y_train.shape[2])
 
-    model = gplvm.GPLVM(x_train_all, y_train_all) #init includes hyperpar optm.
-    print(vars(model)) # this actually only prints object number/mem address/thing
+    model = gplvm.GPLVM(x_train, y_train) #init includes hyperpar optm.
+    print(vars(model)) # matrices print rather long
 
     # here matlab attempts to show pattern of taps using GP, to see if
     # predictions are sensible, but that is probably too much effort for
     # now (and the results weren't intelligible in matlab)
 
     # Test the GP-LVM optimisation
+    [y_test, dissim_test] = get_processed_data(all_data, ref_tap)
+    y_test = np.array(y_test)
+    y_test = y_test.reshape(y_test.shape[0] * y_test.shape[1],
+                              y_test.shape[2])
 
-
-
+    # calculate line shifts based off dissimilarity (EXCEPT HERE WE ARENT
+    # USING GP TO PREDICT SMOOTH PROFILE, GP IS PROBABLY NOT IMPLEMENTED
+    # CORRECTLY! Use flag to use gp smoothing)
+    disp_test = align_all_xs_via_dissim(disp_real, dissim_test)
