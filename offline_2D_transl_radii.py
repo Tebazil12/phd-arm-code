@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import gplvm
 import gp
+import data_processing as dp
 
 
 def load_data():
@@ -237,40 +238,7 @@ def align_radius(disp, dissim, gp_extrap=False):
     return corrected_disp
 
 
-def add_mus(disps, mu_limits=[-1, 1], line_ordering=None):
-    """
-    Disps must be a list, with each entry containing a np.array of
-    displacement values (i.e. an entry per line)
-    """
-    # print(disps)
 
-    n_disp_lines = len(disps)
-
-    # [np.empty(disps[0].shape)] * len(disps)
-    x = np.empty((n_disp_lines, disps[0].shape[0], 2))
-
-    mu_for_line = np.linspace(mu_limits[0], mu_limits[1], n_disp_lines)
-    print(mu_for_line)
-
-    for i, disp in enumerate(disps):
-        if line_ordering is not None:
-            if len(line_ordering) != n_disp_lines:
-                raise NameError("line_ordering has different length to disps")
-            print(line_ordering[i])
-            mus = np.full(disp.shape, mu_for_line[line_ordering[i]])
-        else:
-            mus = np.full(disp.shape, mu_for_line[i])
-        # print(mus)
-        # print(type(mus))
-
-        an_x = np.vstack((disp, mus))
-        # print(an_x)
-
-        x[i] = an_x.T  # todo is this ok, or should np.copy be used for assignment?
-
-    # print(x)
-    # print(x.shape)
-    return x
 
 
 if __name__ == "__main__":
@@ -311,11 +279,13 @@ if __name__ == "__main__":
     # TODO optimize gp-lvm hyperparams
     print(np.argsort(i_training_angles))
 
+    mu_range = [-2, 2]
+
     # need double arg sort to get index of sorted order
-    x_train = add_mus(
+    x_train = dp.add_mus(
         disp_train,
         line_ordering=np.argsort(np.argsort(i_training_angles)),
-        mu_limits=[-2, 2],  # to match offline in matlab
+        mu_limits=mu_range,  # to match offline in matlab
     )
     x_train = x_train.reshape(x_train.shape[0] * x_train.shape[1], x_train.shape[2])
 
@@ -332,10 +302,21 @@ if __name__ == "__main__":
 
     # Test the GP-LVM optimisation
     [y_test, dissim_test] = get_processed_data(all_data, ref_tap)
-    y_test = np.array(y_test)
-    y_test = y_test.reshape(y_test.shape[0] * y_test.shape[1], y_test.shape[2])
+    # y_test = np.array(y_test)
+    # y_test = y_test.reshape(y_test.shape[0] * y_test.shape[1], y_test.shape[2])
 
     # calculate line shifts based off dissimilarity (EXCEPT HERE WE ARENT
     # USING GP TO PREDICT SMOOTH PROFILE, GP IS PROBABLY NOT IMPLEMENTED
     # CORRECTLY! Use flag to use gp smoothing)
     disp_test = align_all_xs_via_dissim(disp_real, dissim_test)
+
+    mus_test = model.optim_mu(disp_test, y_test)
+
+    print(f'in main, final mus {mus_test}')
+    mu_real = np.linspace(mu_range[0], mu_range[1], len(disp_test))
+    print(f'in main, real mus {mu_real}')
+
+    mu_error = mus_test - mu_real
+
+    with np.printoptions(precision=3, suppress=True):
+        print(f'error in mu predictions {mu_error}')

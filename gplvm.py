@@ -1,6 +1,7 @@
 import scipy.optimize
 import numpy as np
 import gp
+import data_processing as dp
 
 
 class GPLVM:
@@ -23,9 +24,37 @@ class GPLVM:
             self.sigma_f = sigma_f
             self.ls = ls
 
-    def max_log_like(self, hyper_pars, data):
-        sigma_f, l_disp, l_mu = hyper_pars
-        x, y = data
+    def max_ll_optim_hyperpars(self, to_optimise, set_vals):
+        sigma_f, l_disp, l_mu = to_optimise
+        x, y = set_vals
+        return self.max_log_like(sigma_f, l_disp, l_mu, x, y)
+
+
+    def max_ll_optim_mu(self, to_optimise, set_vals):
+        mus = to_optimise
+        disp, y = set_vals
+
+        # make x from disp and optimising mu
+        x = dp.add_mus(
+            [disp],
+            mu_limits=[mus, mus],  # same as only one line being passed
+        )
+
+        # print(y)
+        # y = np.array([y])
+        # print(y)
+        x = x.reshape(x.shape[0] * x.shape[1], x.shape[2])
+        # y = y.reshape(y.shape[0] * y.shape[1], y.shape[2])
+
+        #todo add in self.x and self.y otherwise your not using the right model!
+
+        all_xs = np.vstack((self.x, x))
+        all_ys = np.vstack((self.y, y))
+
+        return self.max_log_like(self.sigma_f, self.ls[0], self.ls[1], all_xs, all_ys)
+
+
+    def max_log_like(self, sigma_f, l_disp, l_mu, x, y):
 
         # print(y.shape)
         d_cap, n_cap = y.shape
@@ -69,7 +98,7 @@ class GPLVM:
         data = [x, y]
         # minimizer_kwargs = {"args": data}
         result = scipy.optimize.minimize(
-            self.max_log_like,
+            self.max_ll_optim_hyperpars,
             start_hyperpars,
             args=data,
             method="BFGS",
@@ -81,3 +110,28 @@ class GPLVM:
         self.sigma_f = sigma_f
         self.ls = [l_disp, l_mu]
         # print(result)
+
+    def optim_mu(self, disps, y):
+        #TODO test that hyperpars have been optimised as can't continue without
+
+        mus_test = np.empty((len(disps)))
+
+        # for loop is used so that only one line is trained at a time, otherwise
+        # this isn't representative of online learning
+        for i, disp in enumerate(disps):
+            start_mu = 0 # only one value, which is mu for a line
+            data = [disp, y[i]]
+            # minimizer_kwargs = {"args": data}
+            result = scipy.optimize.minimize(
+                self.max_ll_optim_mu,
+                start_mu,
+                args=data,
+                method="BFGS",
+                options={"gtol": 0.01, "maxiter": 300},  #TODO is this the best number?
+            )
+            # print(result)
+
+            [mus_test[i]] = result.x #TODO figure out return type
+        print(f'The final mus list: {mus_test}')
+
+        return mus_test
